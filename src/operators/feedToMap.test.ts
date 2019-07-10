@@ -1,6 +1,4 @@
-import { stringify } from "querystring";
-import { BehaviorSubject, of } from "rxjs";
-import { from } from "rxjs";
+import { of } from "rxjs";
 import { map, mergeMap, take } from "rxjs/operators";
 import { TestScheduler } from "rxjs/testing";
 import { ChangeFeed$ } from "../types";
