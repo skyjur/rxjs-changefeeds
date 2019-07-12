@@ -4,13 +4,17 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "parcel index.html"
+    "start": "parcel index.html stories.html"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "faker": "^4.1.0",
     "lit-html": "^1.1.1",
-    "rx-js-changefeeds": "file:.."
+    "rx-js-changefeeds": "file:..",
+    "rxjs": "^6.5.2"
+  },
+  "devDependencies": {
+    "typescript": "^3.5.3"
   }
 }
