@@ -12,6 +12,7 @@
     "faker": "^4.1.0",
     "lit-html": "^1.1.1",
     "rx-js-changefeeds": "file:..",
+    "rx-lit-html": "git+https://github.com/skyjur/rx-lit-html.git",
     "rxjs": "^6.5.2"
   },
   "devDependencies": {

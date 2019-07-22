@@ -1,91 +1,57 @@
-import {User, users$, User$} from './sampleData'
-import {html, render, directive} from 'lit-html'
-import {repeat} from 'lit-html/directives/repeat'
-import { Observable } from 'rxjs';
-import { ChangeFeed, ChangeFeed$ } from '../src/types';
-import { map, tap, debounce, debounceTime, throttleTime } from 'rxjs/operators';
-import { feedToMap } from '../src/operators/feedToMap';
+// tslint:disable: no-shadowed-variable
+import {directive, html, render} from "lit-html";
+import {repeat} from "lit-html/directives/repeat";
+import { rxReplace } from "rx-lit-html/src/rxReplace";
+import { interval } from "rxjs";
+import { map, throttleTime } from "rxjs/operators";
+import { feedToMap } from "../src/operators/feedToMap";
+import { ChangeFeed$ } from "../src/types";
+import { SampleUserFeedGenerator } from "./sample-data/SampleUserFeedGenerator";
+import {IUser, IUser$} from "./sample-data/SampleUserFeedGenerator";
+import { blink } from "./ui/utils";
 
-const userRow = (user: User) =>
+const usersGenerator = new SampleUserFeedGenerator();
+const users$ = interval(50).pipe(
+    map(() => usersGenerator.next()),
+);
+
+const userRow = (user: IUser) =>
     blink(html`${user.name} (${user.id.slice(5)})
             <br />
             ${user.company}
 
-            ${user.jobTitle}`)
+            ${user.jobTitle}`);
 
-const userRow$ = (user$: User$) =>
-    rxBind(user$, userRow)
+const userRow$ = (user$: IUser$) =>
+    rxReplace(user$, userRow);
 
-const usersList = (users$: ChangeFeed$<User>) =>
+const usersList = (users$: ChangeFeed$<IUser>) =>
     html`
         <div>
-            ${rxBind(
+            ${rxReplace<Map<any, any>>(
                 users$.pipe(
                     feedToMap(),
-                    throttleTime(500)
+                    throttleTime(500),
                 ),
-                (users) => 
+                (users: Map<any, any>) =>
                     html`
                         Users: ${users.size}
                         <ul>
                         ${repeat(
                             Array.from(users.keys()),
-                            key => key,
-                            key =>
+                            (key) => key,
+                            (key) =>
                                 html`<li id=${key}>
                                     ${key}
                                     ${userRow$(users.get(key)!)}
-                                </li>`
+                                </li>`,
                         )}
-                    </ul>`
+                    </ul>`,
             )}
         </div>
-    `
-
-const rxHtmlState = new WeakMap();
-
-const rxBind: <T>(observable: Observable<T>, template: (value: T) => any) => any
-    = directive((observable, template) => (part: any) => {
-    const state = rxHtmlState.get(part) || {}
-    if(state.observable !== observable || state.template !== template) {
-        if(state.subscription) {
-            console.log('replacing subscription')
-            state.subscription.unsubscribe()
-        }
-        state.template = template
-        state.observable = observable
-        state.subscription = observable.subscribe({
-            next(value) {
-                part.setValue(template(value))
-                part.commit();
-            },
-            error(e) {
-                console.error(e)
-            }
-        })
-        rxHtmlState.set(part, state)
-    }
-})
+    `;
 
 render(
-    usersList(users$.pipe(
-        // tap(console.log)
-    )),
-    document.getElementById('root')!    
-)
-
-const blink = directive((value) => (part: any) => {
-    const t = (on: any) =>
-        html`<style>
-        .blink {
-            background-color: green;
-            transition: background-color 0.5s;
-        }
-        </style>
-        <span class=${on ? 'blink' : ''}>${value}</span>`
-    part.setValue(t(true))
-    setTimeout(() => {
-        part.setValue(t(false))
-        part.commit()
-    }, 500)
-})
+    usersList(users$),
+    document.getElementById("root")!,
+);
