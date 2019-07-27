@@ -4,7 +4,11 @@ import { ChangeFeed$ } from "../types";
 import { feedSortedKeys } from "./feedSortedKeys";
 
 describe("changefeed.operators.feedSortedKeys", () => {
-  const scheduler = new TestScheduler(deepStrictEqual);
+  let scheduler: TestScheduler;
+
+  beforeEach(() => {
+    scheduler = new TestScheduler(deepStrictEqual);
+  });
 
   describe("feedSortedKeys()", () => {
     it("update existing", () => {

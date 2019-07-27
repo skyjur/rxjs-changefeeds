@@ -41,7 +41,7 @@ describe("operators/feedGroupBy", () => {
         map(groups => Array.from(groups.keys()).sort())
       );
 
-      expectObservable(output$).toBe("ab-|", {
+      expectObservable(output$).toBe("abc|", {
         a: ["odd"],
         b: ["even", "odd"],
         c: ["even"]

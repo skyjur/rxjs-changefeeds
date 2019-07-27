@@ -5,7 +5,11 @@ import { ChangeFeedIndex } from "./ChangeFeedIndex";
 import { ChangeFeed } from "./types";
 
 describe("ChangeFeedIndex", () => {
-  const scheduler = new TestScheduler(deepStrictEqual);
+  let scheduler: TestScheduler;
+
+  beforeEach(() => {
+    scheduler = new TestScheduler(deepStrictEqual);
+  });
 
   it("simple set", async () => {
     scheduler.run(({ flush, expectObservable }) => {
@@ -41,20 +45,16 @@ describe("ChangeFeedIndex", () => {
     });
   });
 
-  it("set & delete sequence", async () => {
-    scheduler.run(({ flush, expectObservable }) => {
+  it("set & delete sequence", () => {
+    scheduler.run(({ hot, cold, expectObservable }) => {
       const index = new ChangeFeedIndex(scheduler);
 
-      scheduler
-        .createColdObservable<ChangeFeed<string>>("abcd", {
-          a: ["initializing"],
-          b: ["set", "1", "One1"],
-          c: ["ready"],
-          d: ["del", "1"]
-        })
-        .subscribe(index);
+      hot<ChangeFeed<string>>("-a-b", {
+        a: ["set", "1", "One1"],
+        b: ["del", "1"]
+      }).subscribe(index);
 
-      expectObservable(index.get("1")!).toBe("-a-b", {
+      expectObservable(index.get("1")).toBe("-a-b", {
         a: "One1",
         b: null
       });

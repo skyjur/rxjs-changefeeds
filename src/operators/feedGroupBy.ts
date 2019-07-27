@@ -2,14 +2,17 @@ import { OperatorFunction, Observable, Subject } from "rxjs";
 import { ChangeFeed, ChangeFeed$ } from "../types";
 import { changeFeedHandler } from "../utils";
 
-export function feedGroupBy<K, V>(
-  keySelector: (obj: V) => K
-): OperatorFunction<ChangeFeed<V>, Map<K, ChangeFeed$<V>>> {
-  return (input: ChangeFeed$<V>) => {
-    return new Observable<Map<K, ChangeFeed$<V>>>(subscriber => {
-      const groups = new Map<K, Subject<ChangeFeed<V>>>();
-      const keyGroupKey = new Map<string, K>();
-      const trackedGroupKeys = new Map<K, Set<string>>();
+export function feedGroupBy<GroupKey, Value, ValueKey = any>(
+  keySelector: (obj: Value) => GroupKey
+): OperatorFunction<
+  ChangeFeed<Value>,
+  Map<GroupKey, ChangeFeed$<Value, ValueKey>>
+> {
+  return (input: ChangeFeed$<Value>) => {
+    return new Observable<Map<GroupKey, ChangeFeed$<Value>>>(subscriber => {
+      const groups = new Map<GroupKey, Subject<ChangeFeed<Value>>>();
+      const recordToGroupMap = new Map<ValueKey, GroupKey>();
+      const groupContent = new Map<GroupKey, Set<ValueKey>>();
       let ready = false;
       let initializing = false;
 
@@ -21,8 +24,8 @@ export function feedGroupBy<K, V>(
             if (groups.size > 0) {
               const groupsList = Array.from(groups.values());
               groups.clear();
-              keyGroupKey.clear();
-              trackedGroupKeys.clear();
+              recordToGroupMap.clear();
+              groupContent.clear();
               subscriber.next(groups);
               for (const group of groupsList) {
                 group.complete();
@@ -36,19 +39,19 @@ export function feedGroupBy<K, V>(
               group.next(["ready"]);
             }
           },
-          set(key: string, value: V) {
+          set(key: ValueKey, value: Value) {
             const groupKey = keySelector(value);
-            const oldGroupKey = keyGroupKey.get(key);
+            const oldGroupKey = recordToGroupMap.get(key);
 
             if (oldGroupKey && oldGroupKey !== groupKey) {
               this.del(key);
             }
-            keyGroupKey.set(key, groupKey);
+            recordToGroupMap.set(key, groupKey);
 
             if (!groups.has(groupKey)) {
-              const newGroup = new Subject<ChangeFeed<V>>();
+              const newGroup = new Subject<ChangeFeed<Value>>();
               groups.set(groupKey, newGroup);
-              trackedGroupKeys.set(groupKey, new Set());
+              groupContent.set(groupKey, new Set());
               subscriber.next(groups);
               if (initializing) {
                 newGroup.next(["initializing"]);
@@ -56,22 +59,22 @@ export function feedGroupBy<K, V>(
             }
 
             groups.get(groupKey)!.next(["set", key, value]);
-            trackedGroupKeys.get(groupKey)!.add(key);
+            groupContent.get(groupKey)!.add(key);
           },
-          del(key: string) {
-            const groupKey = keyGroupKey.get(key);
+          del(key: ValueKey) {
+            const groupKey = recordToGroupMap.get(key);
             if (groupKey) {
               const group = groups.get(groupKey);
               if (group) {
-                group.next(["del", key]);
-                const trackedKeys = trackedGroupKeys.get(groupKey)!;
+                const trackedKeys = groupContent.get(groupKey)!;
                 trackedKeys.delete(key);
                 if (trackedKeys.size === 0) {
                   groups.delete(groupKey);
-                  trackedGroupKeys.delete(groupKey);
+                  groupContent.delete(groupKey);
                   group.complete();
                   subscriber.next(groups);
                 }
+                group.next(["del", key]);
               }
             }
           }

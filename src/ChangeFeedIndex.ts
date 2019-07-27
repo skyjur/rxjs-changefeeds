@@ -1,26 +1,21 @@
 import {
-  BehaviorSubject,
   Observable,
-  Subject,
-  Subscription,
-  Unsubscribable,
   SubscriptionLike,
   Observer,
   Subscriber,
-  Scheduler,
   asyncScheduler,
   SchedulerLike
 } from "rxjs";
-import { ChangeFeed, ChangeFeed$ } from "./types";
-import { changeFeedHandler, ChangeFeedHandler } from "./utils";
+import { ChangeFeed } from "./types";
+import { changeFeedHandler } from "./utils";
 
 /**
  * Index last value in changefeed by key into BehaviorSubject
  */
-export class ChangeFeedIndex<T>
-  implements Partial<Observer<ChangeFeed<T>>>, SubscriptionLike {
-  private state: Map<string, T> = new Map();
-  private subscribers = new Map<string, Subscriber<T | null>[]>();
+export class ChangeFeedIndex<Value, Key = any>
+  implements Partial<Observer<ChangeFeed<Value>>>, SubscriptionLike {
+  private state: Map<Key, Value> = new Map();
+  private subscribers = new Map<Key, Subscriber<Value | null>[]>();
   public closed = false;
   private isReady = false;
 
@@ -43,7 +38,7 @@ export class ChangeFeedIndex<T>
         }
       });
     },
-    set: (key: string, value: T) => {
+    set: (key: Key, value: Value) => {
       this.state.set(key, value);
       for (const subscriber of this.subscribers.get(key) || []) {
         this.scheduler.schedule(() => {
@@ -51,7 +46,7 @@ export class ChangeFeedIndex<T>
         });
       }
     },
-    del: (key: string) => {
+    del: (key: Key) => {
       this.state.delete(key);
       for (const subscriber of this.subscribers.get(key) || []) {
         this.scheduler.schedule(() => {
@@ -61,7 +56,7 @@ export class ChangeFeedIndex<T>
     }
   });
 
-  get(key: string): Observable<T | null> {
+  get(key: Key): Observable<Value | null> {
     return new Observable(subscriber => {
       if (this.state.has(key)) {
         this.scheduler.schedule(() => {
