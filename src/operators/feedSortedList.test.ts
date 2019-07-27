@@ -23,13 +23,11 @@ describe("operators/feedSortedList", () => {
         }
       );
 
-      const comparator: Comparator<number> = (a, b) => a - b
+      const comparator: Comparator<number> = (a, b) => a - b;
 
       const output = input.pipe(
         feedSortedList(comparator, { throttleIntervalTime: 0, scheduler }),
-        map((subjects) =>
-          subjects.map((subject) =>
-            subject.value))
+        map(subjects => subjects.map(subject => subject.value))
       );
 
       expectObservable(output).toBe("a-b-c-|", {
@@ -42,20 +40,15 @@ describe("operators/feedSortedList", () => {
 
   it("value change that does not effect sorting does not trigger event", () => {
     scheduler.run(({ expectObservable }) => {
-      const input: ChangeFeed$<any> = scheduler.createColdObservable(
-        "abc|",
-        {
-          a: ["set", "1", 100],
-          b: ["set", "2", 110],
-          c: ["set", "1", 101],
-        }
-      );
+      const input: ChangeFeed$<any> = scheduler.createColdObservable("abc|", {
+        a: ["set", "1", 100],
+        b: ["set", "2", 110],
+        c: ["set", "1", 101]
+      });
 
       const output = input.pipe(
         feedSortedList((a, b) => a - b, { throttleIntervalTime: 0, scheduler }),
-        map((subjects) =>
-          subjects.map((subject) =>
-            subject.value))
+        map(subjects => subjects.map(subject => subject.value))
       );
 
       expectObservable(output).toBe("ab-|", {
@@ -78,9 +71,7 @@ describe("operators/feedSortedList", () => {
 
       const output = input.pipe(
         feedSortedList((a, b) => a - b, { throttleIntervalTime: 1 }),
-        map((subjects) =>
-          subjects.map((subject) =>
-            subject.value))
+        map(subjects => subjects.map(subject => subject.value))
       );
 
       expectObservable(output).toBe("a-b-c-|", {
@@ -93,33 +84,30 @@ describe("operators/feedSortedList", () => {
 
   it("BehaviorSubject is updated with new values and completed on deletion", () => {
     scheduler.run(({ hot, expectObservable }) => {
-      const input: ChangeFeed$<any> = hot(
-        "a-b-c-|",
-        {
-          a: ["set", "1", 100],
-          b: ["set", "1", 101],
-          c: ["del", "1"],
-        }
-      );
+      const input: ChangeFeed$<any> = hot("a-b-c-|", {
+        a: ["set", "1", 100],
+        b: ["set", "1", 101],
+        c: ["del", "1"]
+      });
 
       const sortedList$ = input.pipe(
-        feedSortedList((a, b) => a - b, { throttleIntervalTime: 1 }),
+        feedSortedList((a, b) => a - b, { throttleIntervalTime: 1 })
       );
 
       let one$ = new Subject();
-      let oneSub: Unsubscribable
+      let oneSub: Unsubscribable;
 
       sortedList$.subscribe({
         next(sortedList) {
           if (!oneSub) {
-            oneSub = sortedList[0].subscribe(one$)
+            oneSub = sortedList[0].subscribe(one$);
           }
         }
-      })
+      });
 
       expectObservable(one$).toBe("a-b-|", {
         a: 100,
-        b: 101,
+        b: 101
       });
     });
   });

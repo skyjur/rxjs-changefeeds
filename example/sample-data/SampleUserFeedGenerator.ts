@@ -2,7 +2,7 @@ import * as faker from "faker";
 import { Observable } from "rxjs";
 import { SampleFeedGenerator } from "./SampleFeedGenerator";
 
-export interface IUser {
+export interface User {
     id: string;
     name: string;
     city: string;
@@ -10,10 +10,10 @@ export interface IUser {
     company: string;
     jobTitle: string;
 }
-export type IUser$ = Observable<IUser>;
+export type User$ = Observable<User>;
 
-export class SampleUserFeedGenerator extends SampleFeedGenerator<IUser> {
-    public create(): IUser {
+export class SampleUserFeedGenerator extends SampleFeedGenerator<User> {
+    public create(): User {
         return {
             city: faker.address.city(),
             company: faker.company.companyName(),
@@ -24,7 +24,7 @@ export class SampleUserFeedGenerator extends SampleFeedGenerator<IUser> {
         };
     }
 
-    public update(user: IUser) {
+    public update(user: User) {
         user = {... user};
 
         if (Math.random() > 0.7) {

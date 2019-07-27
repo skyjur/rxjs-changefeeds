@@ -2,10 +2,10 @@ import { Observable } from "rxjs";
 import { ChangeFeed, ChangeFeed$ } from "../types";
 import { changeFeedHandler } from "../utils";
 
-function feedCombine<T>(
+function feedCombine<Project>(
   feeds: Array<ChangeFeed$<any>>,
-  project: (...objs: any[]) => T
-): ChangeFeed$<T> {
+  project: (...objs: any[]) => Project
+): ChangeFeed$<Project> {
   return new Observable(subscriber => {
     let initializing = false;
     const readyAll = feeds.map(() => true);
@@ -14,7 +14,7 @@ function feedCombine<T>(
 
     const subs = feeds.map((feed, index) =>
       feed.subscribe({
-        next: changeFeedHandler<any>({
+        next: changeFeedHandler<any, any>({
           initializing() {
             if (!initializing) {
               initializing = true;

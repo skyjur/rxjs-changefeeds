@@ -1,4 +1,11 @@
-import { interval, OperatorFunction, Observable, Subject, BehaviorSubject, SchedulerLike } from "rxjs";
+import {
+  interval,
+  OperatorFunction,
+  Observable,
+  Subject,
+  BehaviorSubject,
+  SchedulerLike
+} from "rxjs";
 import { filter, map, scan, throttle, tap } from "rxjs/operators";
 import { ChangeFeed, ChangeFeed$ } from "../types";
 import { changeFeedHandler } from "../utils";
@@ -7,7 +14,7 @@ export type Comparator<T> = (a: T, b: T) => number;
 
 interface Options {
   throttleIntervalTime?: number;
-  scheduler?: SchedulerLike
+  scheduler?: SchedulerLike;
 }
 
 export function feedSortedList<Value>(
@@ -21,30 +28,27 @@ export function feedSortedList<Value>(
       let sortedKeys: any[] = [];
       let updateIsPending = false;
 
-      const update = new Subject<void>()
-      const updateSub = update.pipe(
-        tap(() => {
-          updateIsPending = true
-        }),
-        throttle(() => interval(throttleIntervalTime, scheduler)),
-      ).subscribe({
-        next() {
-          const keys = Array.from(data.keys())
-          sortedKeys = keys.sort((key1, key2) => {
-            return cmp(
-              data.get(key1)!.value,
-              data.get(key2)!.value
+      const update = new Subject<void>();
+      const updateSub = update
+        .pipe(
+          tap(() => {
+            updateIsPending = true;
+          }),
+          throttle(() => interval(throttleIntervalTime, scheduler))
+        )
+        .subscribe({
+          next() {
+            const keys = Array.from(data.keys());
+            sortedKeys = keys.sort((key1, key2) => {
+              return cmp(data.get(key1)!.value, data.get(key2)!.value);
+            });
+            keySortIndex = new Map(
+              sortedKeys.map((key, index) => [key, index])
             );
-          });
-          keySortIndex = new Map(
-            sortedKeys.map((key, index) => [key, index])
-          );
-          subscriber.next(
-            sortedKeys.map((key) => data.get(key)!)
-          );
-          updateIsPending = false;
-        }
-      })
+            subscriber.next(sortedKeys.map(key => data.get(key)!));
+            updateIsPending = false;
+          }
+        });
 
       const sub = input.subscribe({
         next: changeFeedHandler({
@@ -84,7 +88,7 @@ export function feedSortedList<Value>(
           }
         }),
         error(e) {
-          subscriber.error(e)
+          subscriber.error(e);
         },
         complete() {
           subscriber.complete();
