@@ -1,23 +1,32 @@
-import { BehaviorSubject, Observable, OperatorFunction, Subject, Subscriber } from "rxjs";
+import {
+  BehaviorSubject,
+  Observable,
+  OperatorFunction,
+  Subject,
+  Subscriber
+} from "rxjs";
 import { debounceTime, filter, map, scan } from "rxjs/operators";
 import { ChangeFeed, ChangeFeed$, HasId } from "../types";
 
 type Output<T> = Map<string, BehaviorSubject<T>>;
 
-export function feedToMap<T extends HasId = HasId>(): OperatorFunction<ChangeFeed<T>, Output<T>> {
+export function feedToMap<T extends HasId = HasId>(): OperatorFunction<
+  ChangeFeed<T>,
+  Output<T>
+> {
   return (input: ChangeFeed$<T>) => {
-    return new Observable<Output<T>>((subscriber) => {
+    return new Observable<Output<T>>(subscriber => {
       const acc = new FeedToMapAccumulator(subscriber);
       const sub = input.subscribe({
         next(record) {
-          acc.next(record)
+          acc.next(record);
         },
         complete() {
-          acc.complete()
-          subscriber.complete()
+          acc.complete();
+          subscriber.complete();
         },
         error(error) {
-          subscriber.error(error)
+          subscriber.error(error);
         }
       });
       return () => {
@@ -31,7 +40,7 @@ class FeedToMapAccumulator<T extends HasId> {
   public keysHasChanged: boolean = false;
   public data: Map<string, BehaviorSubject<T>> = new Map();
 
-  constructor(private output: Subscriber<Output<T>>) { }
+  constructor(private output: Subscriber<Output<T>>) {}
 
   public next(val: ChangeFeed<T>) {
     switch (val[0]) {
@@ -51,8 +60,8 @@ class FeedToMapAccumulator<T extends HasId> {
   }
 
   complete() {
-    for(const s of this.data.values()) {
-      s.complete()
+    for (const s of this.data.values()) {
+      s.complete();
     }
   }
 

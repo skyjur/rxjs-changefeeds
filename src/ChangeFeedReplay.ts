@@ -17,17 +17,18 @@ export class ChangeFeedReplaySubject<T> extends Subject<ChangeFeed<T>> {
   }
 
   public _subscribe(subscriber: Subscriber<ChangeFeed<T>>) {
+    // tslint:disable-next-line:deprecation
     const subscription = super._subscribe(subscriber);
-    this.state.replay(subscriber)
+    this.state.replay(subscriber);
     return subscription;
   }
 }
 
 class ChangeFeedRecorder<T> implements ChangeFeedHandler<T> {
-  private data = new Map<string, T>()
-  private isReady = false
+  private data = new Map<string, T>();
+  private isReady = false;
 
-  next = changeFeedHandler(this)
+  next = changeFeedHandler(this);
 
   replay(subscriber: Subscriber<ChangeFeed<T>>) {
     subscriber.next(["initializing"]);
@@ -40,19 +41,19 @@ class ChangeFeedRecorder<T> implements ChangeFeedHandler<T> {
   }
 
   initializing() {
-    this.data.clear()
-    this.isReady = false
+    this.data.clear();
+    this.isReady = false;
   }
 
   ready() {
-    this.isReady = true
+    this.isReady = true;
   }
 
   set(key: string, value: T) {
-    this.data.set(key, value)
+    this.data.set(key, value);
   }
 
   del(key: string) {
-    this.data.delete(key)
+    this.data.delete(key);
   }
 }

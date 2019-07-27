@@ -17,15 +17,15 @@ interface IScanState<Value = any, Key = any> {
 
 export function feedSortedKeys<Value = any, Key = any>(
   cmp: Comparator<Value>,
-  { throttleIntervalTime = 100 }: IOptions = {},
+  { throttleIntervalTime = 100 }: IOptions = {}
 ): OperatorFunction<ChangeFeed<Value>, Key[]> {
   return (input: ChangeFeed$<Value>) => {
     return input.pipe(
-        scan(scanHandler(cmp), null),
-        throttle(() => interval(throttleIntervalTime)),
-        filter((state) => state.hasUpdates),
-        map(mapHandler(cmp)),
-      );
+      scan(scanHandler(cmp), null),
+      throttle(() => interval(throttleIntervalTime)),
+      filter(state => state.hasUpdates),
+      map(mapHandler(cmp))
+    );
   };
 }
 
@@ -35,7 +35,7 @@ function scanHandler(cmp: Comparator<any>) {
       data: new Map(),
       hasUpdates: true,
       keySortIndex: new Map(),
-      sortedKeys: [],
+      sortedKeys: []
     };
     switch (record[0]) {
       case "set":
@@ -75,7 +75,9 @@ function mapHandler(cmp: Comparator<any>) {
     state.sortedKeys = Array.from(state.data.keys()).sort((key1, key2) => {
       return cmp(state.data.get(key1), state.data.get(key2));
     });
-    state.keySortIndex = new Map(state.sortedKeys.map((key, index) => [key, index]));
+    state.keySortIndex = new Map(
+      state.sortedKeys.map((key, index) => [key, index])
+    );
     state.hasUpdates = false;
     return state.sortedKeys;
   };
