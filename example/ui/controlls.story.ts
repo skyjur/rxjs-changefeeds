@@ -1,6 +1,6 @@
 import { html } from "lit-html";
 import { BehaviorSubject } from "rxjs";
-import { rxBind } from "../utils/rxBind";
+import { rxReplace } from "../utils/rxReplace";
 import { intervalInput } from "./controlls";
 
 export const controllsStory = () => {
@@ -10,7 +10,7 @@ export const controllsStory = () => {
     <h2>intervalInput</h2>
     <div>
         ${intervalInput(10, (val) => $val.next(val))}
-        ${rxBind($val, (val) => `${val}`)}
+        ${rxReplace($val, (val) => `${val}`)}
     </div>
     `;
 };

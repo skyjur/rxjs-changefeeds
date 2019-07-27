@@ -1,56 +1,112 @@
 // tslint:disable: no-shadowed-variable
-import {html, render} from "lit-html";
-import {repeat} from "lit-html/directives/repeat";
-import { rxReplace } from "rx-lit-html/src/rxReplace";
-import { interval } from "rxjs";
-import { map, throttleTime } from "rxjs/operators";
-import { feedToMap } from "../src/operators/feedToMap";
+import { html, render } from "lit-html";
+import { repeat } from "lit-html/directives/repeat";
+import { interval, of, concat, Observable } from "rxjs";
+import { map, take, throttle, reduce, scan } from "rxjs/operators";
 import { ChangeFeed$ } from "../src/types";
 import { SampleUserFeedGenerator, User, User$ } from "./sample-data/SampleUserFeedGenerator";
-import { blink } from "./ui/utils";
+import { blinkOnChange } from "./ui/utils";
+import { feedSortedList } from "../src/operators/feedSortedList";
+import { feedGroupBy } from "../src/operators/feedGroupBy";
+import { rxReplace } from "./utils/rxReplace";
 
 const usersGenerator = new SampleUserFeedGenerator();
-const users$ = interval(50).pipe(
-    map(() => usersGenerator.next()),
-);
+usersGenerator.targetSize = 100
+const users$ = concat(
+    interval(1).pipe(take(100)),
+    interval(50)
+).pipe(
+    map(() => usersGenerator.next())
+)
 
 const userRow = (user: User) =>
-    blink(html`${user.name} (${user.id.slice(5)})
-            <br />
-            ${user.company}
-
-            ${user.jobTitle}`);
+    html`<tr id=${user.id}>
+        <td class=${blinkOnChange(user.name)}>${user.name}</td>
+        <td class=${blinkOnChange(user.company)}>${user.company}</td>
+        <td class=${blinkOnChange(user.city)}>${user.city}</td>
+        <td class=${blinkOnChange(user.jobTitle)}>${user.jobTitle}</td>`;
 
 const userRow$ = (user$: User$) =>
     rxReplace(user$, userRow);
 
-const usersList = (users$: ChangeFeed$<User>) =>
+const usersGroupedByCity = (users$: ChangeFeed$<User>) =>
+    html`
+    <div class="section">
+        <h1 class="title">Change feed content:</h1>
+        <pre>${rxReplace(
+        users$.pipe(
+            scan(
+                (agg, record) => {
+                    agg = agg.length === 0 ? [] : agg
+                    agg.push(record)
+                    if (agg.length > 10) {
+                        agg.shift()
+                    }
+                    return agg
+                }
+                ,
+                [] as any[]
+            )
+        ),
+        (lastRecords) => lastRecords.map(
+            record => JSON.stringify(record)
+        ).join('\n')
+    )}
+        </pre>
+    </div>
+    <div>
+        ${rxReplace(
+        users$.pipe(
+            feedGroupBy((user) => user.city),
+            throttle(val => interval(200))
+        ),
+        (groups) => html`
+                ${repeat(
+            groups.entries(),
+            ([city]) => city,
+            ([city, $users]) => html`
+                        <div class="section">
+                            <h2 class="subtitle">
+                                City: ${city}
+                            </h2>
+
+                            ${sortedUsersList($users)}
+
+                        </div>
+                    `
+        )}`
+    )}
+    </div>
+    `
+
+const sortedUsersList = (users$: ChangeFeed$<User>) =>
     html`
         <div>
-            ${rxReplace<Map<any, any>>(
-                users$.pipe(
-                    feedToMap(),
-                    throttleTime(500),
-                ),
-                (users: Map<any, any>) =>
-                    html`
-                        Users: ${users.size}
-                        <ul>
-                        ${repeat(
-                            Array.from(users.keys()),
-                            (key) => key,
-                            (key) =>
-                                html`<li id=${key}>
-                                    ${key}
-                                    ${userRow$(users.get(key)!)}
-                                </li>`,
-                        )}
-                    </ul>`,
+            ${rxReplace<User$[]>(
+        users$.pipe(
+            feedSortedList(userCmp, { throttleIntervalTime: 50 })
+        ),
+        (users) =>
+            html`
+            <table class="table">
+            <thead>
+            </thead>
+            <tbody>
+            ${repeat(
+                users,
+                (user$) => user$,
+                (user$) => userRow$(user$),
             )}
+            </tbody>
+            </table>`,
+    )}
         </div>
     `;
 
+const userCmp = (user1: User, user2: User) =>
+    user1.name.localeCompare(user2.name);
+
 render(
-    usersList(users$),
+    usersGroupedByCity(users$),
     document.getElementById("root")!,
 );

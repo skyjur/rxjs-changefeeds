@@ -1,19 +1,13 @@
 import { directive, html } from "lit-html";
 
-const blinkTemplate = (on: any, value: any) =>
-    html`<style>
-    .blink {
-        background-color: green;
-        transition: background-color 0.5s;
-    }
-    </style>
-    <span class=${on ? "blink" : ""}>${value}</span>`;
-
-export const blink = directive((value) => (part: any) => {
-    part.setValue(blinkTemplate(true, value));
-    part.commit();
-    setTimeout(() => {
-        part.setValue(blinkTemplate(false, value));
+export const blinkOnChange = directive((value) => (part: any) => {
+    if (part._value !== value) {
+        part._value = value
+        part.setValue("blink");
         part.commit();
-    }, 500);
+        setTimeout(() => {
+            part.setValue("");
+            part.commit();
+        }, 500);
+    }
 });

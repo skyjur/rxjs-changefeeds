@@ -16,6 +16,7 @@
     "rxjs": "^6.5.2"
   },
   "devDependencies": {
+    "sass": "^1.22.7",
     "typescript": "^3.5.3"
   }
 }

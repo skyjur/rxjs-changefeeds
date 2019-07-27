@@ -1,6 +1,7 @@
 import { OperatorFunction, Observable, Subject } from "rxjs";
 import { ChangeFeed, ChangeFeed$ } from "../types";
 import { changeFeedHandler } from "../utils";
+import { ChangeFeedReplaySubject } from "../ChangeFeedReplay";
 
 export function feedGroupBy<GroupKey, Value, ValueKey = any>(
   keySelector: (obj: Value) => GroupKey
@@ -10,7 +11,7 @@ export function feedGroupBy<GroupKey, Value, ValueKey = any>(
 > {
   return (input: ChangeFeed$<Value>) => {
     return new Observable<Map<GroupKey, ChangeFeed$<Value>>>(subscriber => {
-      const groups = new Map<GroupKey, Subject<ChangeFeed<Value>>>();
+      const groups = new Map<GroupKey, ChangeFeedReplaySubject<ChangeFeed<Value>>>();
       const recordToGroupMap = new Map<ValueKey, GroupKey>();
       const groupContent = new Map<GroupKey, Set<ValueKey>>();
       let ready = false;
@@ -49,7 +50,7 @@ export function feedGroupBy<GroupKey, Value, ValueKey = any>(
             recordToGroupMap.set(key, groupKey);
 
             if (!groups.has(groupKey)) {
-              const newGroup = new Subject<ChangeFeed<Value>>();
+              const newGroup = new ChangeFeedReplaySubject<ChangeFeed<Value>>();
               groups.set(groupKey, newGroup);
               groupContent.set(groupKey, new Set());
               subscriber.next(groups);
@@ -57,9 +58,8 @@ export function feedGroupBy<GroupKey, Value, ValueKey = any>(
                 newGroup.next(["initializing"]);
               }
             }
-
-            groups.get(groupKey)!.next(["set", key, value]);
             groupContent.get(groupKey)!.add(key);
+            groups.get(groupKey)!.next(["set", key, value]);
           },
           del(key: ValueKey) {
             const groupKey = recordToGroupMap.get(key);
@@ -67,14 +67,16 @@ export function feedGroupBy<GroupKey, Value, ValueKey = any>(
               const group = groups.get(groupKey);
               if (group) {
                 const trackedKeys = groupContent.get(groupKey)!;
-                trackedKeys.delete(key);
-                if (trackedKeys.size === 0) {
-                  groups.delete(groupKey);
-                  groupContent.delete(groupKey);
-                  group.complete();
-                  subscriber.next(groups);
+                if (trackedKeys.has(key)) {
+                  trackedKeys.delete(key);
+                  group.next(["del", key]);
+                  if (trackedKeys.size === 0) {
+                    groups.delete(groupKey);
+                    groupContent.delete(groupKey);
+                    group.complete();
+                    subscriber.next(groups);
+                  }
                 }
-                group.next(["del", key]);
               }
             }
           }

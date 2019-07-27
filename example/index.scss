@@ -1,0 +1,6 @@
+@import "../node_modules/bulma/bulma.sass";
+
+.blink {
+    background-color: green;
+    transition: background-color 0.5s;
+}

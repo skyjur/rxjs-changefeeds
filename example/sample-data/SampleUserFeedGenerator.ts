@@ -5,6 +5,7 @@ import { SampleFeedGenerator } from "./SampleFeedGenerator";
 export interface User {
     id: string;
     name: string;
+    country: string;
     city: string;
     lastLogin: Date;
     company: string;
@@ -12,20 +13,41 @@ export interface User {
 }
 export type User$ = Observable<User>;
 
+const citySample = [
+    'New York',
+    'Los Angeles',
+    'Chicago',
+    'Houston',
+    'Phoenix',
+    'Philadelphia',
+    'San Antonio',
+    'San Diego',
+    'Dallas',
+    'San Jose',
+    'Austin',
+    'Jacksonville',
+    'Fort Worth',
+    'Columbus',
+    'San Francisco',
+]
+
 export class SampleUserFeedGenerator extends SampleFeedGenerator<User> {
+    public citiesRatio = 0.1
+
     public create(): User {
         return {
-            city: faker.address.city(),
+            country: faker.address.country(),
+            city: this.randomCity(),
             company: faker.company.companyName(),
             id: faker.random.uuid(),
             jobTitle: faker.name.jobTitle(),
             lastLogin: faker.date.past(1),
-            name:  faker.fake("{{name.lastName}}, {{name.firstName}} {{name.suffix}}"),
+            name: faker.fake("{{name.lastName}}, {{name.firstName}} {{name.suffix}}"),
         };
     }
 
     public update(user: User) {
-        user = {... user};
+        user = { ...user };
 
         if (Math.random() > 0.7) {
             user.company = faker.company.companyName();
@@ -38,5 +60,13 @@ export class SampleUserFeedGenerator extends SampleFeedGenerator<User> {
         }
 
         return user;
+    }
+
+    private randomCity() {
+        const numOfCities = Math.min(
+            Math.ceil(this.targetSize * this.citiesRatio),
+            citySample.length
+        )
+        return citySample[Math.floor(Math.random() * numOfCities)]
     }
 }

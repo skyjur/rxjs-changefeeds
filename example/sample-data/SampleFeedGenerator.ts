@@ -8,7 +8,7 @@ export abstract class SampleFeedGenerator<T extends IHasId> {
     public initializing = false;
     public ready = false;
     public targetSize = 100;
-    private data: T[] = [];
+    public data: T[] = [];
     public next(): ChangeFeed<T> {
         const { targetSize } = this;
         const { data } = this;
