@@ -49,31 +49,3 @@ export function feedFilter<T>(
     });
   };
 }
-
-export function feedFilterRx<T>(
-  predicate$: Observable<(a: T) => boolean>
-): OperatorFunction<ChangeFeed<T>, ChangeFeed<T>> {
-  return (feed: ChangeFeed$<T>) => {
-    return new Observable((subscriber) => {
-      let closed = false
-      let feedSub: Unsubscribable | null = null
-      const predicateSub = predicate$.subscribe({
-        next(predicate) {
-          if(!closed) {
-            if(feedSub) {
-              feedSub.unsubscribe()
-            }
-            feedSub = feed.pipe(feedFilter(predicate)).subscribe(subscriber);
-          }
-        }
-      });
-      return () => {
-        closed = true
-        predicateSub.unsubscribe()
-        if(feedSub) {
-          feedSub.unsubscribe()
-        }
-      }
-    })
-  }
-}
