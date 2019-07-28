@@ -1,13 +1,27 @@
 import { TestScheduler } from "rxjs/testing";
-import { deepStrictEqual } from "assert";
+import { deepStrictEqual, deepEqual } from "assert";
 import { ChangeFeed } from "../types";
 import { feedGroupBy } from "./feedGroupBy";
-import { map, take, mergeMap } from "rxjs/operators";
-import { of } from "rxjs";
+import {
+  map,
+  take,
+  mergeMap,
+  first,
+  multicast,
+  switchMap
+} from "rxjs/operators";
+import { of, Subject, Unsubscribable } from "rxjs";
+
+const oddEven = (n: number) => (n % 2 ? "odd" : "even");
 
 describe("operators/feedGroupBy", () => {
+  let scheduler: TestScheduler;
+
+  beforeEach(() => {
+    scheduler = new TestScheduler(deepStrictEqual);
+  });
+
   it("Only unique groups trigger event", () => {
-    const scheduler = new TestScheduler(deepStrictEqual);
     scheduler.run(({ expectObservable }) => {
       const input$ = scheduler.createHotObservable<ChangeFeed<number>>("abc|", {
         a: ["set", "a", 1],
@@ -28,7 +42,6 @@ describe("operators/feedGroupBy", () => {
   });
 
   it("Group is removed when last element is removed", () => {
-    const scheduler = new TestScheduler(deepStrictEqual);
     scheduler.run(({ expectObservable }) => {
       const input$ = scheduler.createHotObservable<ChangeFeed<number>>("abc|", {
         a: ["set", "a", 1],
@@ -37,7 +50,7 @@ describe("operators/feedGroupBy", () => {
       });
 
       const output$ = input$.pipe(
-        feedGroupBy<string, number>(n => (n % 2 ? "odd" : "even")),
+        feedGroupBy<string, number>(oddEven),
         map(groups => Array.from(groups.keys()).sort())
       );
 
@@ -50,7 +63,6 @@ describe("operators/feedGroupBy", () => {
   });
 
   it("Group is removed and new group is created when element is updated", () => {
-    const scheduler = new TestScheduler(deepStrictEqual);
     scheduler.run(({ expectObservable }) => {
       const input$ = scheduler.createHotObservable<ChangeFeed<number>>("a-b", {
         a: ["set", "a", 1],
@@ -58,7 +70,7 @@ describe("operators/feedGroupBy", () => {
       });
 
       const output$ = input$.pipe(
-        feedGroupBy<string, number>(n => (n % 2 ? "odd" : "even")),
+        feedGroupBy<string, number>(oddEven),
         map(groups => Array.from(groups.keys()).sort())
       );
 
@@ -71,21 +83,23 @@ describe("operators/feedGroupBy", () => {
   });
 
   it("Item is removed when updated from group changefeed", () => {
-    const scheduler = new TestScheduler(deepStrictEqual);
-    scheduler.run(({ expectObservable }) => {
-      const input$ = scheduler.createHotObservable<ChangeFeed<number>>(
-        "a-b-c|",
-        {
-          a: ["set", "a", 1],
-          b: ["set", "b", 1],
-          c: ["set", "a", 2]
-        }
-      );
+    scheduler.run(({ hot, expectObservable }) => {
+      const input$ = hot<ChangeFeed<number>>("a-b-c|", {
+        a: ["set", "a", 1],
+        b: ["set", "b", 1],
+        c: ["set", "a", 2]
+      });
 
-      const odd$ = input$.pipe(
-        feedGroupBy<string, number>(n => (n % 2 ? "odd" : "even")),
-        mergeMap(groups => groups.get("odd") || of())
-      );
+      const odd$ = new Subject();
+      let oddSub: Unsubscribable;
+
+      input$.pipe(feedGroupBy<string, number>(oddEven)).subscribe({
+        next(groups) {
+          if (!oddSub) {
+            oddSub = groups.get("odd")!.subscribe(odd$);
+          }
+        }
+      });
 
       expectObservable(odd$).toBe("a-b-c|", {
         a: ["set", "a", 1],

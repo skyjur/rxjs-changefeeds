@@ -11,7 +11,10 @@ export function feedGroupBy<GroupKey, Value, ValueKey = any>(
 > {
   return (input: ChangeFeed$<Value>) => {
     return new Observable<Map<GroupKey, ChangeFeed$<Value>>>(subscriber => {
-      const groups = new Map<GroupKey, ChangeFeedReplaySubject<ChangeFeed<Value>>>();
+      const groups = new Map<
+        GroupKey,
+        ChangeFeedReplaySubject<Value, ValueKey>
+      >();
       const recordToGroupMap = new Map<ValueKey, GroupKey>();
       const groupContent = new Map<GroupKey, Set<ValueKey>>();
       let ready = false;
@@ -50,7 +53,7 @@ export function feedGroupBy<GroupKey, Value, ValueKey = any>(
             recordToGroupMap.set(key, groupKey);
 
             if (!groups.has(groupKey)) {
-              const newGroup = new ChangeFeedReplaySubject<ChangeFeed<Value>>();
+              const newGroup = new ChangeFeedReplaySubject<Value, ValueKey>();
               groups.set(groupKey, newGroup);
               groupContent.set(groupKey, new Set());
               subscriber.next(groups);

@@ -17,15 +17,15 @@ interface Options {
   scheduler?: SchedulerLike;
 }
 
-export function feedSortedList<Value>(
+export function feedSortedList<Value, Key = any>(
   cmp: Comparator<Value>,
   { throttleIntervalTime = 100, scheduler }: Options = {}
-): OperatorFunction<ChangeFeed<Value, any>, Array<BehaviorSubject<Value>>> {
+): OperatorFunction<ChangeFeed<Value, Key>, Array<BehaviorSubject<Value>>> {
   return (input: ChangeFeed$<Value>) => {
     return new Observable(subscriber => {
-      const data = new Map<any, BehaviorSubject<Value>>();
-      let keySortIndex = new Map<any, number>();
-      let sortedKeys: any[] = [];
+      const data = new Map<Key, BehaviorSubject<Value>>();
+      let keySortIndex = new Map<Key, number>();
+      let sortedKeys: Key[] = [];
       let updateIsPending = false;
 
       const update = new Subject<void>();

@@ -8,15 +8,17 @@ import { ChangeFeedHandler, changeFeedHandler } from "./utils";
  * Following ReplySubject paradigm of rxjs
  *
  */
-export class ChangeFeedReplaySubject<T> extends Subject<ChangeFeed<T>> {
-  private state = new ChangeFeedRecorder<T>();
+export class ChangeFeedReplaySubject<Value, Key> extends Subject<
+  ChangeFeed<Value, Key>
+> {
+  private state = new ChangeFeedRecorder<Value, Key>();
 
-  public next(record: ChangeFeed<T>) {
+  public next(record: ChangeFeed<Value, Key>) {
     this.state.next(record);
     super.next(record);
   }
 
-  public _subscribe(subscriber: Subscriber<ChangeFeed<T>>) {
+  public _subscribe(subscriber: Subscriber<ChangeFeed<Value>>) {
     // tslint:disable-next-line:deprecation
     const subscription = super._subscribe(subscriber);
     this.state.replay(subscriber);
@@ -24,14 +26,17 @@ export class ChangeFeedReplaySubject<T> extends Subject<ChangeFeed<T>> {
   }
 }
 
-class ChangeFeedRecorder<T> implements ChangeFeedHandler<T> {
-  private data = new Map<string, T>();
+class ChangeFeedRecorder<Value, Key> implements ChangeFeedHandler<Value, Key> {
+  private initializingStarted = false;
+  private data = new Map<Key, Value>();
   private isReady = false;
 
   next = changeFeedHandler(this);
 
-  replay(subscriber: Subscriber<ChangeFeed<T>>) {
-    subscriber.next(["initializing"]);
+  replay(subscriber: Subscriber<ChangeFeed<Value>>) {
+    if (this.initializingStarted) {
+      subscriber.next(["initializing"]);
+    }
     for (const key of this.data.keys()) {
       subscriber.next(["set", key, this.data.get(key)!]);
     }
@@ -43,17 +48,18 @@ class ChangeFeedRecorder<T> implements ChangeFeedHandler<T> {
   initializing() {
     this.data.clear();
     this.isReady = false;
+    this.initializingStarted = true;
   }
 
   ready() {
     this.isReady = true;
   }
 
-  set(key: string, value: T) {
+  set(key: Key, value: Value) {
     this.data.set(key, value);
   }
 
-  del(key: string) {
+  del(key: Key) {
     this.data.delete(key);
   }
 }

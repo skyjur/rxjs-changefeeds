@@ -1,17 +1,19 @@
 // tslint:disable: no-shadowed-variable
 import { html, render } from "lit-html";
 import { repeat } from "lit-html/directives/repeat";
-import { interval, of, concat, Observable } from "rxjs";
-import { map, take, throttle, reduce, scan } from "rxjs/operators";
+import { interval, concat } from "rxjs";
+import { map, take, throttle, scan } from "rxjs/operators";
 import { ChangeFeed$ } from "../src/types";
 import { SampleUserFeedGenerator, User, User$ } from "./sample-data/SampleUserFeedGenerator";
 import { blinkOnChange } from "./ui/utils";
 import { feedSortedList } from "../src/operators/feedSortedList";
 import { feedGroupBy } from "../src/operators/feedGroupBy";
 import { rxReplace } from "./utils/rxReplace";
+import { cmpBy } from "./utils/common";
 
 const usersGenerator = new SampleUserFeedGenerator();
 usersGenerator.targetSize = 100
+
 const users$ = concat(
     interval(1).pipe(take(100)),
     interval(50)
@@ -58,19 +60,19 @@ const usersGroupedByCity = (users$: ChangeFeed$<User>) =>
         ${rxReplace(
         users$.pipe(
             feedGroupBy((user) => user.city),
-            throttle(val => interval(200))
+            throttle(() => interval(200))
         ),
-        (groups) => html`
+        (groups: Map<string, ChangeFeed$<User>>) => html`
                 ${repeat(
             groups.entries(),
             ([city]) => city,
-            ([city, $users]) => html`
+            ([city, users]) => html`
                         <div class="section">
                             <h2 class="subtitle">
                                 City: ${city}
                             </h2>
 
-                            ${sortedUsersList($users)}
+                            ${sortedUsersList(users)}
 
                         </div>
                     `
@@ -103,8 +105,7 @@ const sortedUsersList = (users$: ChangeFeed$<User>) =>
         </div>
     `;
 
-const userCmp = (user1: User, user2: User) =>
-    user1.name.localeCompare(user2.name);
+const userCmp = cmpBy<User>(row => row.name)
 
 render(
     usersGroupedByCity(users$),
