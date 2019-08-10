@@ -1,2 +1,3 @@
 -r ts-node/register/transpile-only
 src/**/*test.ts
+example/**/*test.ts

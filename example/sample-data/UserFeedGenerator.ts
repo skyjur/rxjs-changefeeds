@@ -1,6 +1,6 @@
 import * as faker from "faker";
 import { Observable } from "rxjs";
-import { SampleFeedGenerator } from "./SampleFeedGenerator";
+import { FeedGenerator } from "./FeedGenerator";
 
 export interface User {
     id: string;
@@ -31,7 +31,7 @@ const citySample = [
     'San Francisco',
 ]
 
-export class SampleUserFeedGenerator extends SampleFeedGenerator<User> {
+export class UserFeedGenerator extends FeedGenerator<User> {
     public citiesRatio = 0.1
 
     public create(): User {
