@@ -1,7 +1,5 @@
-import { ChangeFeed, ChangeFeed$ } from "../../../../src/types";
-import { Point } from "../../../sample-data/PointFeedGenerator";
-import { feedToMap } from "../../../../src/operators/feedToMap";
-import { Observable } from "rxjs";
+import { ChangeFeed$ } from "../../../../src/types";
+import { Point } from "../../../sample-data/PointsFeed";
 import { Context } from "../Context";
 import { changeFeedHandler } from "../../../../src/utils";
 

@@ -1,28 +1,29 @@
-import { PointFeedGenerator, Point } from "../sample-data/PointFeedGenerator";
-import { BehaviorSubject, interval, of, ConnectableObservable } from "rxjs";
-import { map, switchMap, multicast } from "rxjs/operators";
-import { feedCount } from "../../src/operators/feedCount";
+import {
+  MultiPointsCf,
+  VariableIntervalPointCf
+} from "../sample-data/PointsFeed";
+import { BehaviorSubject, of, interval } from "rxjs";
 import { render } from "lit-html";
 import { context } from "./html/Context";
 import { Index } from "./html/Index";
-import { ChangeFeedReplaySubject } from "../../src";
-import { ChangeFeed$, ChangeFeed } from "../../src/types";
+import { throttle } from "rxjs/operators";
 
-const pointGenerator = new PointFeedGenerator();
-pointGenerator.targetSize = 10;
-const updatesPerSecondSubject = new BehaviorSubject(10);
-const pointsCf$ = updatesPerSecondSubject.pipe(
-  switchMap(value => (value > 0 ? interval(1000 / value) : of())),
-  map(() => pointGenerator.next()),
-  multicast(() => new ChangeFeedReplaySubject<Point, string>())
-) as ConnectableObservable<ChangeFeed<Point, string>>;
+const updateInterval = new BehaviorSubject(10);
+const numOfPoints = new BehaviorSubject(10);
+const pointsCf$ = MultiPointsCf(
+  numOfPoints.pipe(throttle(() => interval(1000))),
+  () => VariableIntervalPointCf(updateInterval)
+);
 
-pointsCf$.connect();
+pointsCf$.subscribe({
+  next: console.log
+});
 
 render(
   Index(context, {
-    updatesPerSecondSubject,
-    pointsCf$
+    updateInterval,
+    numOfPoints,
+    pointsCf$: of()
   }),
   document.getElementById("root")!
 );
