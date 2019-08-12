@@ -12,14 +12,14 @@ Changefeeds within this library are expected to look like this:
 
 ```js
 [
-    ["initializing"],  // initial data is loading (optional)
-    ["set", "1", {"id": "1", "name": "Tom"}],
-    ["set", "2", {"id": "2", "name": "Peter"}],
-    ["ready"],  // all initial data has loaded (optional)
-    ["set", "1", {"id": "1", "name": "John"}],  // Tom has changed name to John
-    ["set", "3", {"id": "3", "name": "Merry"}], // new user Merry was created
-    ["del", "2", "2"}]  // Peter was deleted
-]
+  ["initializing"], // initial data is loading (optional)
+  ["set", "1", { id: "1", name: "Tom" }],
+  ["set", "2", { id: "2", name: "Peter" }],
+  ["ready"], // all initial data has loaded (optional)
+  ["set", "1", { id: "1", name: "John" }], // Tom has changed name to John
+  ["set", "3", { id: "3", name: "Merry" }], // new user Merry was created
+  ["del", "2"] // Peter was deleted
+];
 ```
 
 ## What does this libary do about changefeeds?

@@ -26,7 +26,7 @@ export const PointsChartSvg = (
 
         circle.setAttribute("fill", value.color);
         circle.setAttribute("cx", `${value.x}`);
-        circle.setAttribute("cy", `${value.y}`);
+        circle.setAttribute("cy", `${-value.y}`);
         circle.setAttribute("r", "0.05");
 
         if (!elements.has(key)) {

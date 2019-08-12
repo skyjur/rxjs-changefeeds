@@ -1,5 +1,5 @@
 import randomColor from "randomcolor";
-import { Observable, Unsubscribable } from "rxjs";
+import { Observable, Unsubscribable, interval } from "rxjs";
 import { map, switchMap } from "rxjs/operators";
 import { ChangeFeed } from "../../src/types";
 import { randomizedInterval } from "./utils";
@@ -59,7 +59,7 @@ export const MultiPointsCf = (
 export const VariableIntervalPoint = (updateIntervalValue: number$) => {
   let point = new RandomPointGenerator();
   return updateIntervalValue.pipe(
-    switchMap(intervalValue => randomizedInterval(intervalValue)),
+    switchMap(intervalValue => interval(intervalValue)),
     map(() => point.next())
   );
 };
@@ -85,8 +85,8 @@ const circularMotionGenerator = (
   return () => {
     const angle = startingAngle + speed * (Date.now() - t);
     const point = {
-      x: radius * Math.cos(angle),
-      y: radius * Math.sin(angle)
+      x: radius * Math.sin(angle),
+      y: radius * Math.cos(angle)
     };
     return point;
   };

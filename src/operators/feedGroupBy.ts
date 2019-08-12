@@ -45,11 +45,14 @@ export function feedGroupBy<GroupKey, Value, ValueKey = any>(
           },
           set(key: ValueKey, value: Value) {
             const groupKey = keySelector(value);
-            const oldGroupKey = recordToGroupMap.get(key);
 
-            if (oldGroupKey && oldGroupKey !== groupKey) {
-              this.del(key);
+            if (
+              recordToGroupMap.has(key) &&
+              recordToGroupMap.get(key) !== groupKey
+            ) {
+              this.del!(key);
             }
+
             recordToGroupMap.set(key, groupKey);
 
             if (!groups.has(groupKey)) {
@@ -65,10 +68,10 @@ export function feedGroupBy<GroupKey, Value, ValueKey = any>(
             groups.get(groupKey)!.next(["set", key, value]);
           },
           del(key: ValueKey) {
-            const groupKey = recordToGroupMap.get(key);
-            if (groupKey) {
-              const group = groups.get(groupKey);
-              if (group) {
+            if (recordToGroupMap.has(key)) {
+              const groupKey = recordToGroupMap.get(key)!;
+              if (groups.has(groupKey)) {
+                const group = groups.get(groupKey)!;
                 const trackedKeys = groupContent.get(groupKey)!;
                 if (trackedKeys.has(key)) {
                   trackedKeys.delete(key);

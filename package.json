@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/skyjur/rx-js-changefeeds#readme",
   "devDependencies": {
+    "@types/lodash": "^4.14.136",
     "@types/mocha": "^5.2.7",
     "@types/node": "^12.0.12",
     "bulma": "^0.7.5",
@@ -29,6 +30,7 @@
     "faker": "^4.1.0",
     "lit-element": "^2.2.1",
     "lit-html": "^1.1.1",
+    "lodash": "^4.17.15",
     "mocha": "^6.1.4",
     "prettier": "^1.18.2",
     "rx-lit-html": "git+https://github.com/skyjur/rx-lit-html.git",
