@@ -1,84 +1,75 @@
-import faker from "faker";
 import randomColor from "randomcolor";
-import { Observable, of, concat, merge } from "rxjs";
-import { map, switchMap, first, takeUntil, skip, share } from "rxjs/operators";
+import { Observable, Unsubscribable } from "rxjs";
+import { map, switchMap } from "rxjs/operators";
 import { ChangeFeed } from "../../src/types";
 import { randomizedInterval } from "./utils";
-import { number$, void$ } from "../../src/_internal/types";
+import { number$ } from "../../src/_internal/types";
+import { AZSequenceGenerator } from "./SequenceGenerator";
 
 export interface Point {
-  id: string;
   color: string;
   x: number;
   y: number;
 }
 
+export type Point$ = Observable<Point>;
 export type PointCf = ChangeFeed<Point>;
 export type PointCf$ = Observable<PointCf>;
 
 export const MultiPointsCf = (
   numOfPoints$: number$,
-  createPointCf: () => PointCf$
+  updateInterval$: number$
 ): PointCf$ =>
-  numOfPoints$.pipe(
-    switchMap(numOfPoints => {
-      const points: PointCf$[] = new Array(numOfPoints).map(() =>
-        createPointCf().pipe(
-          share(),
-          takeUntil(numOfPoints$)
-        )
-      );
+  new Observable(subscriber => {
+    const idGenerator = new AZSequenceGenerator();
+    const points = new Map<string, Unsubscribable>();
 
-      const firsts: PointCf$[] = points.map(point => point.pipe(first()));
-      const others: PointCf$[] = points.map(point => point.pipe(skip(1)));
-
-      return concat<PointCf>(
-        of<PointCf>(["initializing"]),
-        merge(...firsts),
-        of<PointCf>(["ready"]),
-        merge(...others)
-      );
-    })
-  );
-
-export const VariableIntervalPointCf = (updateIntervalValue: number$) =>
-  SinglePointFeed(
-    updateIntervalValue.pipe(
-      switchMap(intervalValue => randomizedInterval(intervalValue))
-    )
-  );
-
-export const SinglePointFeed = (
-  interval$: void$,
-  { random = Math.random } = {}
-): PointCf$ => {
-  let point: RandomPointGenerator | null = null;
-
-  return interval$.pipe(
-    map(() => {
-      if (point && random() < 1 / 100) {
-        // randomly delete & recreate a new point
-        const { id } = point;
-        point = null;
-        return ["del", id];
-      } else {
-        if (!point) {
-          point = new RandomPointGenerator();
+    const numOfPointsSub = numOfPoints$.subscribe({
+      next(numOfPoints) {
+        while (numOfPoints > points.size) {
+          const id = idGenerator.next();
+          const point = VariableIntervalPoint(updateInterval$);
+          const pointSub = point.subscribe({
+            next(value) {
+              subscriber.next(["set", id, value]);
+            }
+          });
+          points.set(id, pointSub);
         }
-        return ["set", point.id, point.next()];
+
+        while (numOfPoints < points.size) {
+          const keys = Array.from(points.keys());
+          const indexToRemove = Math.floor(Math.random() * points.size);
+          const idToRemove = keys[indexToRemove];
+          points.get(idToRemove)!.unsubscribe();
+          points.delete(idToRemove);
+          subscriber.next(["del", idToRemove]);
+        }
       }
-    })
+    });
+
+    return () => {
+      numOfPointsSub.unsubscribe();
+      for (const key of points.keys()) {
+        points.get(key)!.unsubscribe();
+      }
+    };
+  });
+
+export const VariableIntervalPoint = (updateIntervalValue: number$) => {
+  let point = new RandomPointGenerator();
+  return updateIntervalValue.pipe(
+    switchMap(intervalValue => randomizedInterval(intervalValue)),
+    map(() => point.next())
   );
 };
 
 class RandomPointGenerator {
-  id = faker.random.uuid();
   color = randomColor();
   pathGenerator = circularMotionGenerator();
 
   next(): Point {
     return {
-      id: this.id,
       color: this.color,
       ...this.pathGenerator()
     };
@@ -86,16 +77,17 @@ class RandomPointGenerator {
 }
 
 const circularMotionGenerator = (
-  radius = Math.random(),
-  speed = (Math.random() * Math.PI) / 360 / 5,
-  startingAngle = Math.random() * Math.PI
+  radius = 0.5 + Math.random() / 2,
+  speed = ((0.25 + Math.random() * 0.75) * Math.PI * 2) / 360 / 10,
+  startingAngle = Math.random() * Math.PI * 2
 ) => {
+  const t = Date.now();
   return () => {
+    const angle = startingAngle + speed * (Date.now() - t);
     const point = {
-      x: radius * Math.cos(startingAngle),
-      y: radius * Math.sin(startingAngle)
+      x: radius * Math.cos(angle),
+      y: radius * Math.sin(angle)
     };
-    startingAngle += speed;
     return point;
   };
 };

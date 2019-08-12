@@ -6,12 +6,12 @@ import { ChangeFeed$ } from "../../../src/types";
 import { Point } from "../../sample-data/PointsFeed";
 
 interface IndexProps {
-  updateInterval: BehaviorSubject<number>;
+  updatesPerSec: BehaviorSubject<number>;
   numOfPoints: BehaviorSubject<number>;
   pointsCf$: ChangeFeed$<Point>;
 }
 
-const updateIntervalScale: RangeScale = {
+const updatePerSecScale: RangeScale = {
   min: 0,
   max: 1000,
   out: (input: number) => Math.floor(Math.pow(input, 2) / 1000),
@@ -19,7 +19,7 @@ const updateIntervalScale: RangeScale = {
 };
 
 const numOfPointsScale: RangeScale = {
-  min: 1,
+  min: 0,
   max: 100,
   out: val => val,
   in: val => val
@@ -31,14 +31,13 @@ export const Index = ({ html, ctx }: Context, props: IndexProps) => {
       <div>
         <label>
           Point updates per sec:
-          ${RangeInput(ctx, props.updateInterval, numOfPointsScale)}
+          ${RangeInput(ctx, props.updatesPerSec, updatePerSecScale)}
         </label>
       </div>
 
       <div>
         <label>
-          Num of points:
-          ${RangeInput(ctx, props.numOfPoints, updateIntervalScale)}
+          Num of points: ${RangeInput(ctx, props.numOfPoints, numOfPointsScale)}
         </label>
       </div>
     </section>

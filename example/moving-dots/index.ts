@@ -1,29 +1,20 @@
-import {
-  MultiPointsCf,
-  VariableIntervalPointCf
-} from "../sample-data/PointsFeed";
+import { MultiPointsCf } from "../sample-data/PointsFeed";
 import { BehaviorSubject, of, interval } from "rxjs";
 import { render } from "lit-html";
 import { context } from "./html/Context";
 import { Index } from "./html/Index";
-import { throttle } from "rxjs/operators";
+import { map } from "rxjs/operators";
 
-const updateInterval = new BehaviorSubject(10);
-const numOfPoints = new BehaviorSubject(10);
-const pointsCf$ = MultiPointsCf(
-  numOfPoints.pipe(throttle(() => interval(1000))),
-  () => VariableIntervalPointCf(updateInterval)
-);
-
-pointsCf$.subscribe({
-  next: console.log
-});
+const updatesPerSec = new BehaviorSubject(25);
+const updateInterval = updatesPerSec.pipe(map(val => 1000 / val));
+const numOfPoints = new BehaviorSubject(5);
+const pointsCf$ = MultiPointsCf(numOfPoints, updateInterval);
 
 render(
   Index(context, {
-    updateInterval,
+    updatesPerSec,
     numOfPoints,
-    pointsCf$: of()
+    pointsCf$
   }),
   document.getElementById("root")!
 );
