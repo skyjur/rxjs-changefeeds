@@ -103,8 +103,8 @@ const redrawPoinsOnCanvas = (
 
   const offsetX = width * 0.5;
   const offsetY = height * 0.5;
-  const scaleX = (width - circleSize - 5) * 0.5;
-  const scaleY = (height - circleSize - 5) * 0.5;
+  const scaleX = width * 0.5 - circleSize - 1;
+  const scaleY = height * 0.5 - circleSize - 1;
 
   const tau = Math.PI * 2;
   const arcSize = circleSize * 0.5;

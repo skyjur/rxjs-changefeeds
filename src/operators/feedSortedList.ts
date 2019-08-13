@@ -4,7 +4,9 @@ import {
   Observable,
   Subject,
   BehaviorSubject,
-  SchedulerLike
+  SchedulerLike,
+  asyncScheduler,
+  Unsubscribable
 } from "rxjs";
 import { filter, map, scan, throttle, tap } from "rxjs/operators";
 import { ChangeFeed, ChangeFeed$ } from "../types";
@@ -19,36 +21,34 @@ interface Options {
 
 export function feedSortedList<Value, Key = any>(
   cmp: Comparator<Value>,
-  { throttleIntervalTime = 100, scheduler }: Options = {}
+  { throttleIntervalTime = 100, scheduler = asyncScheduler }: Options = {}
 ): OperatorFunction<ChangeFeed<Value, Key>, Array<BehaviorSubject<Value>>> {
   return (input: ChangeFeed$<Value>) => {
     return new Observable(subscriber => {
       const data = new Map<Key, BehaviorSubject<Value>>();
       let keySortIndex = new Map<Key, number>();
       let sortedKeys: Key[] = [];
-      let updateIsPending = false;
 
-      const update = new Subject<void>();
-      const updateSub = update
-        .pipe(
-          tap(() => {
-            updateIsPending = true;
-          }),
-          throttle(() => interval(throttleIntervalTime, scheduler))
-        )
-        .subscribe({
-          next() {
-            const keys = Array.from(data.keys());
-            sortedKeys = keys.sort((key1, key2) => {
-              return cmp(data.get(key1)!.value, data.get(key2)!.value);
-            });
-            keySortIndex = new Map(
-              sortedKeys.map((key, index) => [key, index])
-            );
-            subscriber.next(sortedKeys.map(key => data.get(key)!));
-            updateIsPending = false;
-          }
+      let pendingFlushWork: Unsubscribable | null = null;
+
+      const flushUpdatesNow = () => {
+        const keys = Array.from(data.keys());
+        sortedKeys = keys.sort((key1, key2) => {
+          return cmp(data.get(key1)!.value, data.get(key2)!.value);
         });
+        keySortIndex = new Map(sortedKeys.map((key, index) => [key, index]));
+        subscriber.next(sortedKeys.map(key => data.get(key)!));
+        pendingFlushWork = null;
+      };
+
+      const scheduleFlushUpdates = () => {
+        if (!pendingFlushWork) {
+          pendingFlushWork = scheduler.schedule(
+            flushUpdatesNow,
+            throttleIntervalTime
+          );
+        }
+      };
 
       const sub = input.subscribe({
         next: changeFeedHandler({
@@ -61,30 +61,32 @@ export function feedSortedList<Value, Key = any>(
           set(key, newValue) {
             if (data.has(key)) {
               data.get(key)!.next(newValue);
-              if (!updateIsPending) {
+              if (!pendingFlushWork) {
                 const i = keySortIndex.get(key)!;
                 if (i > 0) {
                   const valueLeft = data.get(sortedKeys[i - 1])!.value;
                   if (cmp(valueLeft, newValue) > 0) {
-                    update.next();
+                    scheduleFlushUpdates();
                   }
                 }
                 if (i < sortedKeys.length - 1) {
                   const valueRight = data.get(sortedKeys[i + 1])!.value;
                   if (cmp(newValue, valueRight) > 0) {
-                    update.next();
+                    scheduleFlushUpdates();
                   }
                 }
               }
             } else {
               data.set(key, new BehaviorSubject(newValue));
-              update.next();
+              scheduleFlushUpdates();
             }
           },
           del(key) {
-            data.get(key)!.complete();
-            data.delete(key);
-            update.next();
+            if (data.has(key)) {
+              data.get(key)!.complete();
+              data.delete(key);
+              scheduleFlushUpdates();
+            }
           }
         }),
         error(e) {
@@ -100,7 +102,9 @@ export function feedSortedList<Value, Key = any>(
 
       return () => {
         sub.unsubscribe();
-        updateSub.unsubscribe();
+        if (pendingFlushWork) {
+          pendingFlushWork.unsubscribe();
+        }
         for (const subject of data.values()) {
           subject.complete();
         }

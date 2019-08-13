@@ -9,6 +9,7 @@ import { rxReplace } from "../../utils/rxReplace";
 import { repeat } from "lit-html/directives/repeat";
 import { maxBy } from "lodash";
 import { weakCache, memoize } from "../../utils/caching";
+import { feedSortedList } from "../../../src/operators/feedSortedList";
 
 interface IndexProps {
   updatesPerSec: BehaviorSubject<number>;
@@ -55,8 +56,38 @@ export const Index = ({ html, ctx }: Context, props: IndexProps) => {
       <h2>Group by shade</h2>
       ${GroupedPoints(ctx, props.pointsCf$)}
     </section>
+
+    <section>
+      <h2>Sorted points by x</h2>
+      ${SortedPoints(ctx, props.pointsCf$)}
+    </section>
   `;
 };
+
+const SortedPoints = ({ ctx, html }: Context, points: PointCf$) =>
+  rxReplace(
+    points.pipe(
+      feedSortedList((a, b) => a.x - b.x, { throttleIntervalTime: 100 })
+    ),
+    pointList =>
+      repeat(
+        pointList,
+        point => point,
+        point$ =>
+          html`
+            <div>
+              ${Circle(ctx, point$.value.color)}
+              x=${rxReplace(point$, point => point.x.toFixed(3))}
+            </div>
+          `
+      )
+  );
+
+const Circle = ({ html }: Context, color: string) => html`
+  <i
+    style="background: ${color}; width: 1em; height: 1em; border-radius: 50%; display: inline-block;"
+  ></i>
+`;
 
 const GroupedPoints = ({ html, ctx }: Context, points: PointCf$) =>
   html`
