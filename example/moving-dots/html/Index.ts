@@ -7,9 +7,10 @@ import { Point, PointCf$ } from "../../sample-data/PointsFeed";
 import { feedGroupBy } from "../../../src/operators/feedGroupBy";
 import { rxReplace } from "../../utils/rxReplace";
 import { repeat } from "lit-html/directives/repeat";
+import { styleMap } from "lit-html/directives/style-map";
 import { maxBy } from "lodash";
-import { weakCache, memoize } from "../../utils/caching";
 import { feedSortedList } from "../../../src/operators/feedSortedList";
+import { stat } from "fs";
 
 interface IndexProps {
   updatesPerSec: BehaviorSubject<number>;
@@ -67,25 +68,52 @@ export const Index = ({ html, ctx }: Context, props: IndexProps) => {
 const SortedPoints = ({ ctx, html }: Context, points: PointCf$) =>
   rxReplace(
     points.pipe(
-      feedSortedList((a, b) => a.x - b.x, { throttleIntervalTime: 100 })
+      feedSortedList((a, b) => a.x - b.x, { throttleIntervalTime: 1000 / 10 })
     ),
     pointList =>
       repeat(
         pointList,
         point => point,
-        point$ =>
+        (point$, i) =>
           html`
-            <div>
-              ${Circle(ctx, point$.value.color)}
-              x=${rxReplace(point$, point => point.x.toFixed(3))}
+            <div
+              style="position: relative; line-height: 1.5; font-family: monospace;"
+            >
+              ${indexChange(point$, i)}
+              ${rxReplace(
+                point$,
+                point => html`
+                  x=${point.x.toFixed(3)}
+                  ${Circle(ctx, point$.value.color, {
+                    left: 100 + point.x * 100
+                  })}
+                `
+              )}
             </div>
           `
       )
   );
 
-const Circle = ({ html }: Context, color: string) => html`
+const prevIndex = new WeakMap();
+
+const indexChange = (target: any, index: number) => {
+  const state = prevIndex.get(target) || { index, change: 0 };
+  const change = state.index === index ? state.change : state.index - index;
+  prevIndex.set(target, { index, change });
+  return change;
+};
+
+const Circle = ({ html }: Context, color: string, { left = 0 } = {}) => html`
   <i
-    style="background: ${color}; width: 1em; height: 1em; border-radius: 50%; display: inline-block;"
+    style=${styleMap({
+      left: (80 + left).toFixed(0) + "px",
+      background: color,
+      width: "1em",
+      height: "1em",
+      borderRadius: "50%",
+      display: "inline-block",
+      position: "absolute"
+    })}
   ></i>
 `;
 
