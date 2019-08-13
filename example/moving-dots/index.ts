@@ -5,9 +5,9 @@ import { context } from "./html/Context";
 import { Index } from "./html/Index";
 import { map, share } from "rxjs/operators";
 
-const updatesPerSec = new BehaviorSubject(50);
+const updatesPerSec = new BehaviorSubject(60);
 const updateInterval = updatesPerSec.pipe(map(val => 1000 / val));
-const numOfPoints = new BehaviorSubject(5);
+const numOfPoints = new BehaviorSubject(20);
 const pointsCf$ = MultiPointsCf(numOfPoints, updateInterval).pipe(share());
 
 render(

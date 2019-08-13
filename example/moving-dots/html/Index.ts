@@ -1,7 +1,7 @@
 import { Context } from "./Context";
 import { BehaviorSubject, of } from "rxjs";
 import { RangeInput, RangeScale } from "./input/RangeInput";
-import { PointsChartSvg } from "./PointsChart/PointsChart";
+import { PointsChartSvg, PointsChartCanvas } from "./PointsChart/PointsChart";
 import { ChangeFeed$ } from "../../../src/types";
 import { Point, PointCf$ } from "../../sample-data/PointsFeed";
 import { feedGroupBy } from "../../../src/operators/feedGroupBy";
@@ -48,7 +48,7 @@ export const Index = ({ html, ctx }: Context, props: IndexProps) => {
     </section>
 
     <section>
-      ${PointsChartSvg(ctx, props.pointsCf$)}
+      ${PointsChartCanvas(ctx, props.pointsCf$)}
     </section>
 
     <section>
@@ -81,7 +81,7 @@ const ShadeGroup = ({ html, ctx }: Context, quarter: Shade, points: PointCf$) =>
   html`
     <td>
       <h3>${shadeLabels[quarter]}</h3>
-      ${PointsChartSvg(ctx, points)}
+      ${PointsChartCanvas(ctx, points)}
     </td>
   `;
 
@@ -136,7 +136,7 @@ const shadeLabels: { [key in Shade]: string } = {
 
 const getPointShade = (point: Point) => getShade(point.color);
 
-const getShade: (color: string) => Shade = memoize({}, color => {
+const getShade: (color: string) => Shade = color => {
   const [, ...colors] = /#(..)(..)(..)/.exec(color);
   const [r, g, b] = colors.map(color => parseInt(color, 16));
   if (Math.max(Math.abs(r - g), Math.abs(r - b), Math.abs(b - g)) < 20) {
@@ -153,4 +153,4 @@ const getShade: (color: string) => Shade = memoize({}, color => {
     const [shade] = maxBy(shadesAndWeights, ([, weight]) => weight);
     return shade;
   }
-});
+};
