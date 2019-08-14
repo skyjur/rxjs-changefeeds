@@ -78,7 +78,7 @@ class RandomPointGenerator {
 
 const circularMotionGenerator = (
   radius = 0.5 + Math.random() / 2,
-  speed = ((0.25 + Math.random() * 0.75) * Math.PI * 2) / 360 / 20,
+  speed = ((0.25 + Math.random() * 0.75) * Math.PI * 2) / 360 / 40,
   startingAngle = Math.random() * Math.PI * 2
 ) => {
   const t = Date.now();

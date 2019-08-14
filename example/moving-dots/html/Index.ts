@@ -54,47 +54,82 @@ export const Index = ({ html, ctx }: Context, props: IndexProps) => {
     </section>
 
     <section>
-      <h2>Group by shade</h2>
-      ${GroupedPoints(ctx, props.pointsCf$)}
+      <h2>Group by quarter</h2>
+      ${PointsGroupedByQuarter(ctx, props.pointsCf$)}
     </section>
 
     <section>
-      <h2>Sorted points by x</h2>
+      <h2>Group by shade</h2>
+      ${PointsGroupedByShade(ctx, props.pointsCf$)}
+    </section>
+
+    <section>
+      <h2>Sorted points by Point.x</h2>
       ${SortedPoints(ctx, props.pointsCf$)}
     </section>
   `;
 };
 
 const SortedPoints = ({ ctx, html }: Context, points: PointCf$) =>
-  rxReplace(
-    points.pipe(
-      feedSortedList((a, b) => a.x - b.x, { throttleIntervalTime: 1000 / 10 })
-    ),
-    pointList =>
-      repeat(
-        pointList,
-        point => point,
-        (point$, i) =>
-          html`
-            <div
-              style="position: relative; line-height: 1.5; font-family: monospace;"
-            >
-              ${indexChange(point$, i)}
-              ${rxReplace(
-                point$,
-                point => html`
-                  x=${point.x.toFixed(3)}
-                  ${Circle(ctx, point$.value.color, {
-                    left: 100 + point.x * 100
-                  })}
-                `
-              )}
-            </div>
-          `
-      )
-  );
+  html`
+    <style>
+      .sorted-points-container {
+        position: relative;
+      }
+      .sorted-points-row {
+        position: absolute;
+        height: 1.5em;
+        font-family: monospace;
+        transition: top 0.5s;
+      }
+      .sorted-points-bubble {
+        position: absolute;
+        display: block;
+        width: 1em;
+        height: 1em;
+        border-radius: 50%;
+      }
+    </style>
+    ${rxReplace(
+      points.pipe(
+        feedSortedList((a, b) => a.x - b.x, {
+          throttleIntervalTime: 500
+        })
+      ),
+      pointList => html`
+        <div
+          class="sorted-points-container"
+          style=${styleMap({
+            height: (1.5 * pointList.length).toFixed(2) + "em"
+          })}
+        >
+          ${repeat(
+            pointList,
+            point => point,
+            (point$, index) =>
+              html`
+                <div class="sorted-points-row" style=${styleMap({
+                  top: (index * 1.5).toFixed(2) + "em"
+                })}>
+                    ${rxReplace(
+                      point$,
+                      point => html`
+                        x=${(point.x > 0 ? " " : "") + point.x.toFixed(3)}
+                        ${SortedPointsBubble(ctx, point)}
+                      `
+                    )}
+                  </div>
+                </div>
+              `
+          )}
+        </div>
+      `
+    )}
+  `;
 
 const prevIndex = new WeakMap();
+
+const d = ({ x, y }: Point) => Math.sqrt(2) - Math.sqrt(x * x + y * y);
 
 const indexChange = (target: any, index: number) => {
   const state = prevIndex.get(target) || { index, change: 0 };
@@ -103,21 +138,18 @@ const indexChange = (target: any, index: number) => {
   return change;
 };
 
-const Circle = ({ html }: Context, color: string, { left = 0 } = {}) => html`
+const SortedPointsBubble = ({ html }: Context, { color, x }: Point) => html`
   <i
+    class="sorted-points-bubble"
     style=${styleMap({
-      left: (80 + left).toFixed(0) + "px",
-      background: color,
-      width: "1em",
-      height: "1em",
-      borderRadius: "50%",
-      display: "inline-block",
-      position: "absolute"
+      backgroundColor: color,
+      top: "0.25em",
+      left: (200 + x * 100).toFixed(2) + "px"
     })}
   ></i>
 `;
 
-const GroupedPoints = ({ html, ctx }: Context, points: PointCf$) =>
+const PointsGroupedByShade = ({ html, ctx }: Context, points: PointCf$) =>
   html`
     ${rxReplace(
       groupPointsByShade(points),
@@ -136,10 +168,42 @@ const GroupedPoints = ({ html, ctx }: Context, points: PointCf$) =>
     )}
   `;
 
-const ShadeGroup = ({ html, ctx }: Context, quarter: Shade, points: PointCf$) =>
+const PointsGroupedByQuarter = ({ html, ctx }: Context, points: PointCf$) =>
+  html`
+    ${rxReplace(
+      groupPointsByQuarter(points),
+      groups =>
+        html`
+          <table>
+            <tr>
+              ${[
+                Quarter.first,
+                Quarter.second,
+                Quarter.third,
+                Quarter.fourth
+              ].map(key => QuaarterGroup(ctx, key, groups.get(key)! || of()))}
+            </tr>
+          </table>
+        `
+    )}
+  `;
+
+const ShadeGroup = ({ html, ctx }: Context, shade: Shade, points: PointCf$) =>
   html`
     <td>
-      <h3>${shadeLabels[quarter]}</h3>
+      <h3>${shadeLabels[shade]}</h3>
+      ${PointsChartCanvas(ctx, points)}
+    </td>
+  `;
+
+const QuaarterGroup = (
+  { html, ctx }: Context,
+  quarter: Quarter,
+  points: PointCf$
+) =>
+  html`
+    <td>
+      <h3>${quarterLabels[quarter]}</h3>
       ${PointsChartCanvas(ctx, points)}
     </td>
   `;
