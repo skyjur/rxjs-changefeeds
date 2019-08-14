@@ -5,7 +5,7 @@ import { PointsChartSvg, PointsChartCanvas } from "./PointsChart/PointsChart";
 import { ChangeFeed$ } from "../../../src/types";
 import { Point, PointCf$ } from "../../sample-data/PointsFeed";
 import { feedGroupBy } from "../../../src/operators/feedGroupBy";
-import { rxReplace } from "../../utils/rxReplace";
+import { rxReplace } from "../../directives/rxReplace";
 import { repeat } from "lit-html/directives/repeat";
 import { styleMap } from "lit-html/directives/style-map";
 import { maxBy } from "lodash";
@@ -85,9 +85,10 @@ const SortedPoints = ({ ctx, html }: Context, points: PointCf$) =>
       .sorted-points-bubble {
         position: absolute;
         display: block;
-        width: 1em;
-        height: 1em;
+        width: 0.8em;
+        height: 0.8em;
         border-radius: 50%;
+        top: 0.35em;
       }
     </style>
     ${rxReplace(
@@ -143,8 +144,7 @@ const SortedPointsBubble = ({ html }: Context, { color, x }: Point) => html`
     class="sorted-points-bubble"
     style=${styleMap({
       backgroundColor: color,
-      top: "0.25em",
-      left: (200 + x * 100).toFixed(2) + "px"
+      left: (170 + x * 100).toFixed(2) + "px"
     })}
   ></i>
 `;
@@ -176,12 +176,11 @@ const PointsGroupedByQuarter = ({ html, ctx }: Context, points: PointCf$) =>
         html`
           <table>
             <tr>
-              ${[
-                Quarter.first,
-                Quarter.second,
-                Quarter.third,
-                Quarter.fourth
-              ].map(key => QuaarterGroup(ctx, key, groups.get(key)! || of()))}
+              ${repeat(
+                [Quarter.first, Quarter.second, Quarter.third, Quarter.fourth],
+                key => key,
+                key => QuarterGroup(ctx, key, groups.get(key)! || of())
+              )}
             </tr>
           </table>
         `
@@ -196,7 +195,7 @@ const ShadeGroup = ({ html, ctx }: Context, shade: Shade, points: PointCf$) =>
     </td>
   `;
 
-const QuaarterGroup = (
+const QuarterGroup = (
   { html, ctx }: Context,
   quarter: Quarter,
   points: PointCf$

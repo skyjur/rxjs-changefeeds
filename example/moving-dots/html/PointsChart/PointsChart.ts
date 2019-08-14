@@ -3,6 +3,8 @@ import { Point } from "../../../sample-data/PointsFeed";
 import { Context } from "../Context";
 import { changeFeedHandler } from "../../../../src/utils";
 import { stringify } from "querystring";
+import { directive } from "lit-html";
+import { cacheResult } from "../../../directives/cacheResult";
 
 const svgns: "http://www.w3.org/2000/svg" = "http://www.w3.org/2000/svg";
 const xmlns: "http://www.w3.org/2000/xmlns/" = "http://www.w3.org/2000/xmlns/";
@@ -48,6 +50,11 @@ export const PointsChartSvg = (
 };
 
 export const PointsChartCanvas = (
+  context: Context,
+  pointsCf$: ChangeFeed$<Point>
+) => cacheResult(pointsCf$, () => _PointsChartCanvas(context, pointsCf$));
+
+const _PointsChartCanvas = (
   { document }: Context,
   pointsCf$: ChangeFeed$<Point>
 ) => {
