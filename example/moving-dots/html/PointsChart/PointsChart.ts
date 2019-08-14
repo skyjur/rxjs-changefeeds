@@ -2,8 +2,6 @@ import { ChangeFeed$ } from "../../../../src/types";
 import { Point } from "../../../sample-data/PointsFeed";
 import { Context } from "../Context";
 import { changeFeedHandler } from "../../../../src/utils";
-import { stringify } from "querystring";
-import { directive } from "lit-html";
 import { cacheResult } from "../../../directives/cacheResult";
 
 const svgns: "http://www.w3.org/2000/svg" = "http://www.w3.org/2000/svg";
@@ -69,6 +67,12 @@ const _PointsChartCanvas = (
   const interval = setInterval(() => {
     if (changes > 0) {
       changes = 0;
+
+      const width = canvas.scrollWidth;
+      const height = canvas.scrollHeight;
+      ctx.clearRect(0, 0, width, height);
+      drawGrid(ctx, width, height);
+
       redrawPoinsOnCanvas(
         ctx,
         pointsMap.values(),
@@ -103,9 +107,7 @@ const redrawPoinsOnCanvas = (
   points: Iterable<Point>,
   width: number,
   height: number
-) => {
-  context.clearRect(0, 0, width, height);
-
+): void => {
   const circleSize = Math.max(Math.min(height, width) * 0.02, 1);
 
   const offsetX = width * 0.5;
@@ -126,4 +128,41 @@ const redrawPoinsOnCanvas = (
     context.strokeStyle = point.color;
     context.stroke();
   }
+};
+
+const drawGrid = (
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number
+): void => {
+  context.strokeStyle = "#eeeeee";
+  context.fillStyle = "#eeeeee";
+
+  context.moveTo(width / 2, 0);
+  context.lineTo(width / 2, height);
+
+  context.moveTo(0, height / 2);
+  context.lineTo(width, height / 2);
+
+  context.lineWidth = 1;
+  context.stroke();
+
+  // arrow x
+  context.beginPath();
+  context.moveTo(width, height / 2);
+  context.lineTo(width - 10, height / 2 - 3);
+  context.lineTo(width - 10, height / 2 + 3);
+  context.lineTo(width, height / 2);
+
+  // arrow y
+  context.moveTo(width / 2, 0);
+  context.lineTo(width / 2 - 3, 10);
+  context.lineTo(width / 2 + 3, 10);
+  context.lineTo(width / 2, 0);
+
+  context.fill();
+
+  context.font = "10px monospace";
+  context.fillText("x", width - 6, height / 2 + 10);
+  context.fillText("y", width / 2 + 6, 10);
 };
