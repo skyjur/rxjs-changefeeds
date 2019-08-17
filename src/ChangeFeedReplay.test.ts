@@ -4,7 +4,7 @@ import { ChangeFeed } from "./types";
 
 describe("changefeed.ChangeFeedReplySubject", () => {
   it("replies only last update to new subscriber", async () => {
-    const subject = new ChangeFeedReplaySubject<string>();
+    const subject = new ChangeFeedReplaySubject<string, string>();
 
     subject.next(["initializing"]);
     subject.next(["set", "1", "A"]);

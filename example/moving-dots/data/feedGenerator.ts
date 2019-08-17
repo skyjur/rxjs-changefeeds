@@ -1,10 +1,9 @@
 import randomColor from "randomcolor";
 import { Observable, Unsubscribable, interval } from "rxjs";
 import { map, switchMap } from "rxjs/operators";
-import { ChangeFeed } from "../../src/types";
-import { randomizedInterval } from "./utils";
-import { number$ } from "../../src/_internal/types";
-import { AZSequenceGenerator } from "./SequenceGenerator";
+import { ChangeFeed } from "../../../src/types";
+import { number$ } from "../../../src/_internal/types";
+import { AZSequenceGenerator } from "../../sample-data/SequenceGenerator";
 
 export interface Point {
   color: string;

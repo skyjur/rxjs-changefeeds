@@ -1,8 +1,8 @@
-import { MultiPointsCf } from "../sample-data/PointsFeed";
+import { MultiPointsCf } from "./data/feedGenerator";
 import { BehaviorSubject, of, interval } from "rxjs";
 import { render } from "lit-html";
 import { context } from "./html/Context";
-import { Index } from "./html/Index";
+import { Index } from "./html";
 import { map, share } from "rxjs/operators";
 
 const updatesPerSec = new BehaviorSubject(20);

@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "check": "tsc --noEmit && tslint --project .",
+    "tsc:watch": "tsc --noEmit --watch",
     "fix": "tslint --fix --project .",
     "format": "prettier src/**/* --write",
     "test": "mocha",
