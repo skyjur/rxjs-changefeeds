@@ -1,5 +1,5 @@
-import { feedGroupBy } from "../../../../src/operators/feedGroupBy";
-import { PointCf$, Point } from "../feedGenerator";
+import { feedGroupBy } from "../../../src/operators/feedGroupBy";
+import { PointCf$, Point } from "./feedGenerator";
 
 export enum Quarter {
   first,

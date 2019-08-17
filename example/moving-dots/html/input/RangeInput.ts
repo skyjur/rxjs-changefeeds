@@ -20,7 +20,7 @@ export const RangeInput = (
         <input
           class="range-input-control"
           type="range"
-          @input=${bindInput(subject, scale.out)}
+          @input=${inputHandler(subject, scale.out)}
           min=${scale.in(scale.min)}
           max=${scale.in(scale.max)}
           value=${scale.in(value)}
@@ -31,7 +31,7 @@ export const RangeInput = (
       `
   );
 
-const bindInput = (
+const inputHandler = (
   subject: BehaviorSubject<number>,
   scaleOut: (x: number) => any
 ) => (e: HTMLInputElementEvent) => {

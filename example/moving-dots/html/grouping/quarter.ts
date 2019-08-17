@@ -1,18 +1,18 @@
-import { Quarter, groupPointsByQuarter } from "../../data/grouping/quarter";
+import { Quarter, groupPointsByQuarter } from "../../data/quarter";
 import { Context } from "../Context";
 import { PointCf$ } from "../../data/feedGenerator";
 import { rxReplace } from "../../../directives/rxReplace";
 import { repeat } from "lit-html/directives/repeat";
 import { PointsChartCanvas } from "../charts/pointsCanvas";
 
-const quarterLabels = {
+export const quarterLabels = {
   [Quarter.first]: "1st",
   [Quarter.second]: "2nd",
   [Quarter.third]: "3rd",
   [Quarter.fourth]: "4th"
 };
 
-const quarterSubtitle = {
+export const quarterSubtitle = {
   [Quarter.first]: "x>0, y>0",
   [Quarter.second]: "x<0, y<0",
   [Quarter.third]: "x<0, y<0",

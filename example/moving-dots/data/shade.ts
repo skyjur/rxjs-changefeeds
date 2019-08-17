@@ -1,10 +1,20 @@
-import { Point, PointCf$ } from "../feedGenerator";
-import { Map$ } from "../../../../src/_internal/types";
-import { feedGroupBy } from "../../../../src/operators/feedGroupBy";
+import { Point, PointCf$ } from "./feedGenerator";
+import { Map$, Array$ } from "../../../src/_internal/types";
+import { feedGroupBy } from "../../../src/operators/feedGroupBy";
 import { maxBy } from "lodash";
+import { Observable } from "rxjs";
+import { feedFilterRx } from "../../../src/operators/feedFilterRx";
+import { map } from "rxjs/operators";
 
 export const groupPointsByShade = (points: PointCf$): Map$<Shade, PointCf$> =>
   points.pipe(feedGroupBy<Shade, Point>(getPointShade));
+
+export const pointCfReactiveShadeFilter = (shades$: Array$<Shade>) =>
+  feedFilterRx(shades$.pipe(map(pointShadeFilter)));
+
+export const pointShadeFilter = (shades: Shade[]) => {
+  return (point: Point) => shades.indexOf(getShade(point.color)) !== -1;
+};
 
 export enum Shade {
   red,
@@ -15,6 +25,8 @@ export enum Shade {
   violet,
   grey
 }
+
+export type Shade$ = Observable<Shade>;
 
 export const getPointShade = (point: Point) => getShade(point.color);
 

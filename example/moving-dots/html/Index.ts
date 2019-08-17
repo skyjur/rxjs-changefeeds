@@ -6,6 +6,7 @@ import { Point } from "../data/feedGenerator";
 import { PointsChartCanvas } from "./charts/pointsCanvas";
 import { PointsGroupedByQuarter } from "./grouping/quarter";
 import { SortedPoints } from "./sorting";
+import { Filtering } from "./filtering";
 
 interface IndexProps {
   updatesPerSec: BehaviorSubject<number>;
@@ -63,6 +64,12 @@ export const Index = ({ html, ctx }: Context, props: IndexProps) => {
     <section class="container">
       <h2 class="title">Sorted points by Point.x</h2>
       ${SortedPoints(ctx, props.pointsCf$)}
+    </section>
+
+    <section class="container">
+      <h2 class="title">Filtering</h2>
+
+      ${Filtering(ctx, props.pointsCf$)}
     </section>
   `;
 };

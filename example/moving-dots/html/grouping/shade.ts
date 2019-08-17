@@ -3,7 +3,17 @@ import { PointCf$ } from "../../data/feedGenerator";
 import { rxReplace } from "../../../directives/rxReplace";
 import { repeat } from "lit-html/directives/repeat";
 import { PointsChartCanvas } from "../charts/pointsCanvas";
-import { groupPointsByShade, Shade } from "../../data/grouping/shade";
+import { groupPointsByShade, Shade } from "../../data/shade";
+
+export const shadeLabels: { [key in Shade]: string } = {
+  [Shade.red]: "red",
+  [Shade.yellow]: "yellow",
+  [Shade.green]: "green",
+  [Shade.cyan]: "cyan",
+  [Shade.blue]: "blue",
+  [Shade.violet]: "violet",
+  [Shade.grey]: "grey"
+};
 
 export const PointsGroupedByShade = (
   { html, ctx }: Context,
@@ -38,13 +48,3 @@ export const ShadeGroup = (
       ${PointsChartCanvas(ctx, points)}
     </td>
   `;
-
-export const shadeLabels: { [key in Shade]: string } = {
-  [Shade.red]: "red",
-  [Shade.yellow]: "yellow",
-  [Shade.green]: "green",
-  [Shade.cyan]: "cyan",
-  [Shade.blue]: "blue",
-  [Shade.violet]: "violet",
-  [Shade.grey]: "grey"
-};
