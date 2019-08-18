@@ -41,7 +41,7 @@ export const SortedPoints = (
         >
           ${repeat(
             pointList,
-            point => point,
+            point$ => point$,
             (point$, index) =>
               html`
                 <div class="sorted-points-row" style=${styleMap({
