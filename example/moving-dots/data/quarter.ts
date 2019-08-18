@@ -19,19 +19,6 @@ export const allQuarters = [
   Quarter.fourth
 ];
 
-export type QuarterGroupedPointCf = Map<Quarter, PointCf$>;
-export type QuarterGroupedPointCf$ = Observable<QuarterGroupedPointCf>;
-
-export const groupPointsByQuarter = (
-  points: PointCf$
-): QuarterGroupedPointCf$ =>
-  points.pipe(feedGroupBy<Quarter, Point, string>(getQuarter));
-
-export const rxOpReactiveQuarterFilter = (
-  quarters$: Array$<Quarter>
-): OperatorFunction<PointCf, PointCf> =>
-  feedFilterRx(quarters$.pipe(map(quarterFilter)));
-
 export const quarterFilter = (quarters: Quarter[]) => (point: Point) =>
   quarters.indexOf(getQuarter(point)) !== -1;
 

@@ -89,7 +89,7 @@ const sortedUsersList = (users$: ChangeFeed$<User>) =>
   html`
     <div>
       ${rxReplace<User$[]>(
-        users$.pipe(feedSortedList(userCmp, { throttleIntervalTime: 50 })),
+        users$.pipe(feedSortedList(userCmp, { throttleTime: 50 })),
         users =>
           html`
             <table class="table">

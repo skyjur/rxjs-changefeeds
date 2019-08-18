@@ -11,23 +11,38 @@ interface IndexProps {
 
 export const Index = ({ html }: Context, props: IndexProps) => {
   return html`
+    <header>
+      <h1 class="title">Circling dots</h1>
+      <p class="subtitle">
+        Examples illustrating changefeeds handling with rx-js-changefeed.
+      </p>
+    </header>
+
+    <hr class="hr" style="margin-bottom: 0;" />
+
     <section class="container">
-      <h2 class="title">Input</h2>
+      <h2 class="title is-4 is-spaced">Input</h2>
       ${props.input}
     </section>
 
+    <hr class="hr" style="margin-bottom: 0;" />
+
     <section class="container">
-      <h2 class="title">Group by quarter</h2>
+      <h2 class="title is-4 is-spaced">Group by</h2>
       ${props.grouping}
     </section>
 
+    <hr class="hr" style="margin-bottom: 0;" />
+
     <section class="container">
-      <h2 class="title">Sorted points by Point.x</h2>
+      <h2 class="title is-4 is-spaced">Sorted list</h2>
       ${props.sorting}
     </section>
 
+    <hr class="hr" style="margin-bottom: 0;" />
+
     <section class="container">
-      <h2 class="title">Filtering</h2>
+      <h2 class="title is-4 is-spaced">Filtering</h2>
       ${props.filtering}
     </section>
   `;

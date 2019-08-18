@@ -17,5 +17,3 @@ export class Context {
     return this;
   }
 }
-
-export const context = new Context();

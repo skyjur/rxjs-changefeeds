@@ -15,13 +15,13 @@ import { changeFeedHandler } from "../utils";
 export type Comparator<T> = (a: T, b: T) => number;
 
 interface Options {
-  throttleIntervalTime?: number;
+  throttleTime?: number;
   scheduler?: SchedulerLike;
 }
 
 export function feedSortedList<Value, Key = any>(
   cmp: Comparator<Value>,
-  { throttleIntervalTime = 100, scheduler = asyncScheduler }: Options = {}
+  { throttleTime = 100, scheduler = asyncScheduler }: Options = {}
 ): OperatorFunction<ChangeFeed<Value, Key>, Array<BehaviorSubject<Value>>> {
   return (input: ChangeFeed$<Value>) => {
     return new Observable(subscriber => {
@@ -43,10 +43,7 @@ export function feedSortedList<Value, Key = any>(
 
       const scheduleFlushUpdates = () => {
         if (!pendingFlushWork) {
-          pendingFlushWork = scheduler.schedule(
-            flushUpdatesNow,
-            throttleIntervalTime
-          );
+          pendingFlushWork = scheduler.schedule(flushUpdatesNow, throttleTime);
         }
       };
 

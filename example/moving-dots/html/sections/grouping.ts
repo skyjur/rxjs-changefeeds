@@ -1,13 +1,10 @@
-import {
-  Quarter,
-  allQuarters,
-  QuarterGroupedPointCf$
-} from "../../data/quarter";
+import { Quarter, allQuarters } from "../../data/quarter";
 import { Context } from "../Context";
 import { PointCf$ } from "../../data/feedGenerator";
 import { rxReplace } from "../../../directives/rxReplace";
 import { repeat } from "lit-html/directives/repeat";
 import { PointsChartCanvas } from "../charts/pointsCanvas";
+import { Observable } from "rxjs";
 
 export const quarterLabels = {
   [Quarter.first]: "1st",
@@ -22,6 +19,9 @@ export const quarterSubtitle = {
   [Quarter.third]: "x<0, y<0",
   [Quarter.fourth]: "x<0, y>0"
 };
+
+export type QuarterGroupedPointCf = Map<Quarter, PointCf$>;
+export type QuarterGroupedPointCf$ = Observable<QuarterGroupedPointCf>;
 
 export const Grouping = (
   { html, ctx }: Context,

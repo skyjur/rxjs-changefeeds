@@ -15,7 +15,7 @@ export type Point$ = Observable<Point>;
 export type PointCf = ChangeFeed<Point, string>;
 export type PointCf$ = Observable<PointCf>;
 
-export const MultiPointsCf = (
+export const PointsChangeFeed = (
   numOfPoints$: number$,
   updateInterval$: number$
 ): PointCf$ =>

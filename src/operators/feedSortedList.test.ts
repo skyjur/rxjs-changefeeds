@@ -26,7 +26,7 @@ describe("operators/feedSortedList", () => {
       const comparator: Comparator<number> = (a, b) => a - b;
 
       const output = input.pipe(
-        feedSortedList(comparator, { throttleIntervalTime: 0, scheduler }),
+        feedSortedList(comparator, { throttleTime: 0, scheduler }),
         map(subjects => subjects.map(subject => subject.value))
       );
 
@@ -47,7 +47,7 @@ describe("operators/feedSortedList", () => {
       });
 
       const output = input.pipe(
-        feedSortedList((a, b) => a - b, { throttleIntervalTime: 0, scheduler }),
+        feedSortedList((a, b) => a - b, { throttleTime: 0, scheduler }),
         map(subjects => subjects.map(subject => subject.value))
       );
 
@@ -70,7 +70,7 @@ describe("operators/feedSortedList", () => {
       );
 
       const output = input.pipe(
-        feedSortedList((a, b) => a - b, { throttleIntervalTime: 0 }),
+        feedSortedList((a, b) => a - b, { throttleTime: 0 }),
         map(subjects => subjects.map(subject => subject.value))
       );
 
@@ -91,7 +91,7 @@ describe("operators/feedSortedList", () => {
       });
 
       const sortedList$ = input.pipe(
-        feedSortedList((a, b) => a - b, { throttleIntervalTime: 0 })
+        feedSortedList((a, b) => a - b, { throttleTime: 0 })
       );
 
       let one$ = new Subject();
