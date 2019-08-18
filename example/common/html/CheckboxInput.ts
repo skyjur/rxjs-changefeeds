@@ -1,5 +1,5 @@
-import { boolean$ } from "../../../../src/_internal/types";
-import { Context } from "../Context";
+import { boolean$ } from "../../../src/_internal/types";
+import { Context } from "../../moving-dots/html/Context";
 import { distinct, tap } from "rxjs/operators";
 
 export const CheckboxInput = (

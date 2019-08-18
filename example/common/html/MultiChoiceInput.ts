@@ -1,5 +1,5 @@
 import { Subject, BehaviorSubject } from "rxjs";
-import { Context } from "../Context";
+import { Context } from "../../moving-dots/html/Context";
 import { map, tap, distinct, distinctUntilChanged } from "rxjs/operators";
 import { CheckboxInput } from "./CheckboxInput";
 

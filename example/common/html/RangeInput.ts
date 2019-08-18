@@ -1,5 +1,5 @@
 import { BehaviorSubject } from "rxjs";
-import { Context } from "../Context";
+import { Context } from "../../moving-dots/html/Context";
 
 export interface RangeScale {
   min: number;
