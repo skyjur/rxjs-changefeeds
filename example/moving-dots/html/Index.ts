@@ -14,15 +14,26 @@ export const Index = ({ html }: Context, props: IndexProps) => {
     <header>
       <h1 class="title">Circling dots</h1>
       <p class="subtitle">
-        Examples illustrating changefeeds handling with rx-js-changefeed.
+        Examples illustrating changefeeds handling with rx-js-changfeeds usage.
       </p>
     </header>
 
     <hr class="hr" style="margin-bottom: 0;" />
 
-    <section class="container">
-      <h2 class="title is-4 is-spaced">Input</h2>
+    <section class="container content">
+      <h2 class="title is-4 is-spaced">Input feed</h2>
+      <p>
+        Source changfeed that is used in later examples is made of points of
+        fixed color that report position every specified interval.
+      </p>
       ${props.input}
+    </section>
+
+    <hr class="hr" style="margin-bottom: 0;" />
+
+    <section class="container">
+      <h2 class="title is-4 is-spaced">Filtering</h2>
+      ${props.filtering}
     </section>
 
     <hr class="hr" style="margin-bottom: 0;" />
@@ -37,13 +48,6 @@ export const Index = ({ html }: Context, props: IndexProps) => {
     <section class="container">
       <h2 class="title is-4 is-spaced">Sorted list</h2>
       ${props.sorting}
-    </section>
-
-    <hr class="hr" style="margin-bottom: 0;" />
-
-    <section class="container">
-      <h2 class="title is-4 is-spaced">Filtering</h2>
-      ${props.filtering}
     </section>
   `;
 };

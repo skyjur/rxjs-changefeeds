@@ -18,16 +18,16 @@ export const RangeInput = (
     value =>
       html`
         <input
-          class="range-input-control"
+          class="slider has-output is-info"
           type="range"
           @input=${inputHandler(subject, scale.out)}
           min=${scale.in(scale.min)}
           max=${scale.in(scale.max)}
           value=${scale.in(value)}
         />
-        <span class="range-input-value">
+        <output>
           ${value}
-        </span>
+        </output>
       `
   );
 

@@ -1,8 +1,9 @@
 import { Context } from "../Context";
 import { RangeScale, RangeInput } from "../../../common/html/RangeInput";
-import { PointsChartCanvas } from "../charts/pointsCanvas";
+import { PointsChartCanvas } from "../feedOutput/pointsCanvas";
 import { PointCf$ } from "../../data/feedGenerator";
 import { BehaviorSubject } from "rxjs";
+import { RawChangeFeed } from "../feedOutput/rawChangeFeed";
 
 const updatePerSecScale: RangeScale = {
   min: 0,
@@ -28,7 +29,7 @@ export const Input = ({ html, ctx }: Context, props: InputProps) => html`
   <div class="columns">
     <div class="column">
       <div class="field">
-        <label>Point updates per sec:</label>
+        <label>Position updates per point per sec:</label>
         <div class="control">
           ${RangeInput(ctx, props.updatesPerSec$, updatePerSecScale)}
         </div>
@@ -45,6 +46,9 @@ export const Input = ({ html, ctx }: Context, props: InputProps) => html`
     </div>
     <div class="column">
       ${PointsChartCanvas(ctx, props.pointsCf$)}
+    </div>
+    <div class="column">
+      ${RawChangeFeed(ctx, props.pointsCf$)}
     </div>
   </div>
 `;

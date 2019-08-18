@@ -1,11 +1,13 @@
 @import "../node_modules/bulma/bulma.sass";
+@import "../node_modules/bulma-extensions/bulma-checkradio/src/sass/index.sass";
+@import "../node_modules/bulma-extensions/bulma-slider/src/sass/index.sass";
 
 .blink {
   background-color: green;
   transition: background-color 0.5s;
 }
 
-label.checkbox {
+label {
   user-select: none;
 }
 

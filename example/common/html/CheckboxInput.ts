@@ -4,6 +4,7 @@ import { distinct, tap } from "rxjs/operators";
 
 export const CheckboxInput = (
   { rxReplace, html }: Context,
+  id: string,
   checked$: boolean$,
   onChange: (checked: boolean) => void
 ) =>
@@ -15,7 +16,9 @@ export const CheckboxInput = (
 
     return html`
       <input
+        id=${id}
         type="checkbox"
+        class="is-checkradio"
         @input=${changeHandler}
         .checked=${checked ? true : false}
       />

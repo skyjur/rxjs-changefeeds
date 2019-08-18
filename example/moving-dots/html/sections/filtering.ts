@@ -19,15 +19,16 @@ export const shadeLabels: { [key in Shade]: string } = {
   [Shade.green]: "green",
   [Shade.cyan]: "cyan",
   [Shade.blue]: "blue",
-  [Shade.violet]: "violet",
-  [Shade.grey]: "grey"
+  [Shade.violet]: "violet"
 };
 
 const ShadeLabel = ({  }: Context, shade: Shade) => shadeLabels[shade];
 const QuarterLabel = ({ html }: Context, quarter: Quarter) =>
   html`
     ${quarterLabels[quarter]}
-    <small class="is-size-7">(${quarterSubtitle[quarter]})</small>
+    <small class="is-size-7 is-family-monospace"
+      >(${quarterSubtitle[quarter]})</small
+    >
   `;
 
 export const Filtering = (

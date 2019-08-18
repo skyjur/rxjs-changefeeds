@@ -15,7 +15,7 @@ export const quarterLabels = {
 
 export const quarterSubtitle = {
   [Quarter.first]: "x>0, y>0",
-  [Quarter.second]: "x<0, y<0",
+  [Quarter.second]: "x>0, y<0",
   [Quarter.third]: "x<0, y<0",
   [Quarter.fourth]: "x<0, y>0"
 };

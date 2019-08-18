@@ -8,26 +8,30 @@ export interface Choice<T> {
   value: T;
 }
 
+let inputId = 1;
+
 export const MultiChoiceInput = <T>(
   { html, rxReplace, ctx }: Context,
   allChoices: Array<T>,
   selectedChoices$: BehaviorSubject<T[]>,
   Label: (ctx: Context, value: T) => any
 ) =>
-  allChoices.map(
-    choice => html`
+  allChoices.map(choice => {
+    const inputName = `checkbox-${inputId++}`;
+    return html`
       <div class="field">
-        <label class="checkbox">
-          ${CheckboxInput(
-            ctx,
-            isSelected(selectedChoices$, choice),
-            changeHandler(selectedChoices$, choice)
-          )}
+        ${CheckboxInput(
+          ctx,
+          inputName,
+          isSelected(selectedChoices$, choice),
+          changeHandler(selectedChoices$, choice)
+        )}
+        <label for=${inputName}>
           ${Label(ctx, choice)}
         </label>
       </div>
-    `
-  );
+    `;
+  });
 
 const isSelected = (selectedChoices$: BehaviorSubject<any[]>, choice: any) =>
   selectedChoices$.pipe(

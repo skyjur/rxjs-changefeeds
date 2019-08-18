@@ -12,8 +12,7 @@ export enum Shade {
   green,
   cyan,
   blue,
-  violet,
-  grey
+  violet
 }
 
 export const allShades: Shade[] = [
@@ -22,8 +21,7 @@ export const allShades: Shade[] = [
   Shade.green,
   Shade.cyan,
   Shade.blue,
-  Shade.violet,
-  Shade.grey
+  Shade.violet
 ];
 
 export type Shade$ = Observable<Shade>;
@@ -34,18 +32,14 @@ export const getShade = (color: string): Shade => {
   const r = parseInt(color.slice(1, 3), 16);
   const g = parseInt(color.slice(3, 5), 16);
   const b = parseInt(color.slice(5, 7), 16);
-  if (Math.max(Math.abs(r - g), Math.abs(r - b), Math.abs(b - g)) < 20) {
-    return Shade.grey;
-  } else {
-    const shadesAndWeights: [Shade, number][] = [
-      [Shade.red, r],
-      [Shade.yellow, r * 0.6 + g * 0.6],
-      [Shade.green, g],
-      [Shade.cyan, g * 0.6 + b * 0.6],
-      [Shade.blue, b],
-      [Shade.violet, r * 0.6 + b * 0.6]
-    ];
-    const [shade] = maxBy(shadesAndWeights, ([, weight]) => weight);
-    return shade;
-  }
+  const shadesAndWeights: [Shade, number][] = [
+    [Shade.red, r],
+    [Shade.yellow, r * 0.6 + g * 0.6],
+    [Shade.green, g],
+    [Shade.cyan, g * 0.6 + b * 0.6],
+    [Shade.blue, b],
+    [Shade.violet, r * 0.6 + b * 0.6]
+  ];
+  const [shade] = maxBy(shadesAndWeights, ([, weight]) => weight);
+  return shade;
 };
