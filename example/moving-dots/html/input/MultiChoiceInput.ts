@@ -1,45 +1,45 @@
 import { Subject, BehaviorSubject } from "rxjs";
 import { Context } from "../Context";
+import { map, tap, distinct, distinctUntilChanged } from "rxjs/operators";
+import { CheckboxInput } from "./CheckboxInput";
 
 export interface Choice<T> {
-  label: string
-  value: T
+  label: string;
+  value: T;
 }
 
 export const MultiChoiceInput = <T>(
   { html, rxReplace, ctx }: Context,
-  choices: Array<T>,
+  allChoices: Array<T>,
   selectedChoices$: BehaviorSubject<T[]>,
   Label: (ctx: Context, value: T) => any
 ) =>
-  rxReplace(
-    selectedChoices$,
-    selectedChoices =>
-      choices.map(
-        choice => html`
-          <div class="field">
-            <label class="checkbox">
-              <input
-                type="checkbox"
-                @change=${changeHandler(selectedChoices$, choice)}
-                ?checked=${selectedChoices.indexOf(choice) !== -1}
-                />
-                ${Label(ctx, choice)}
-            </label>
-          </div>
-        `
-      )
+  allChoices.map(
+    choice => html`
+      <div class="field">
+        <label class="checkbox">
+          ${CheckboxInput(
+            ctx,
+            isSelected(selectedChoices$, choice),
+            changeHandler(selectedChoices$, choice)
+          )}
+          ${Label(ctx, choice)}
+        </label>
+      </div>
+    `
   );
 
-const changeHandler = (
-  choices$: BehaviorSubject<any[]>,
-  choice: any
-) => (e: HTMLInputElementEvent) => {
-  choices$.next(choices$.value.filter((selectedValue) => {
-    if (selectedValue === choice) {
-      return e.target.checked
-    } else {
-      return true
-    }
-  });
+const isSelected = (selectedChoices$: BehaviorSubject<any[]>, choice: any) =>
+  selectedChoices$.pipe(
+    map(choices => choices.indexOf(choice) !== -1),
+    distinctUntilChanged()
+  );
+
+const changeHandler = (choices$: BehaviorSubject<any[]>, choice: any) => (
+  checked: boolean
+) => {
+  const otherChoices = choices$.value.filter(
+    selectedChoice => selectedChoice !== choice
+  );
+  choices$.next(checked ? [...otherChoices, choice] : otherChoices);
 };

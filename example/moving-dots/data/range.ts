@@ -15,7 +15,7 @@ interface PointRange {
 
 type PointRange$ = Observable<PointRange>;
 
-export const reactivePointCfRangeFilter = (range$: PointRange$) =>
+export const rxOpReactiveRangeFilter = (range$: PointRange$) =>
   feedFilterRx(range$.pipe(map(range => rangeFilter(range))));
 
 export const rangeFilter = ({

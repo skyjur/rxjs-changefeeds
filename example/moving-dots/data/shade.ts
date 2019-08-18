@@ -9,11 +9,11 @@ import { map } from "rxjs/operators";
 export const groupPointsByShade = (points: PointCf$): Map$<Shade, PointCf$> =>
   points.pipe(feedGroupBy<Shade, Point>(getPointShade));
 
-export const pointCfReactiveShadeFilter = (shades$: Array$<Shade>) =>
+export const rxOpReactiveShadeFilter = (shades$: Array$<Shade>) =>
   feedFilterRx(shades$.pipe(map(pointShadeFilter)));
 
 export const pointShadeFilter = (shades: Shade[]) => {
-  return (point: Point) => shades.indexOf(getShade(point.color)) !== -1;
+  return (point: Point) => shades.indexOf(getPointShade(point)) !== -1;
 };
 
 export enum Shade {
@@ -26,14 +26,24 @@ export enum Shade {
   grey
 }
 
+export const allShades: Shade[] = [
+  Shade.red,
+  Shade.yellow,
+  Shade.green,
+  Shade.cyan,
+  Shade.blue,
+  Shade.violet,
+  Shade.grey
+];
+
 export type Shade$ = Observable<Shade>;
 
 export const getPointShade = (point: Point) => getShade(point.color);
 
 export const getShade = (color: string): Shade => {
   const r = parseInt(color.slice(1, 3), 16);
-  const g = parseInt(color.slice(3, 6), 16);
-  const b = parseInt(color.slice(6, 9), 16);
+  const g = parseInt(color.slice(3, 5), 16);
+  const b = parseInt(color.slice(5, 7), 16);
   if (Math.max(Math.abs(r - g), Math.abs(r - b), Math.abs(b - g)) < 20) {
     return Shade.grey;
   } else {

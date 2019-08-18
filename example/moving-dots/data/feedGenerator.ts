@@ -12,7 +12,7 @@ export interface Point {
 }
 
 export type Point$ = Observable<Point>;
-export type PointCf = ChangeFeed<Point>;
+export type PointCf = ChangeFeed<Point, string>;
 export type PointCf$ = Observable<PointCf>;
 
 export const MultiPointsCf = (
