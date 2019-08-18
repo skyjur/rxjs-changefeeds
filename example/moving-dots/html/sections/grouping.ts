@@ -1,4 +1,8 @@
-import { Quarter, groupPointsByQuarter } from "../../data/quarter";
+import {
+  Quarter,
+  allQuarters,
+  QuarterGroupedPointCf$
+} from "../../data/quarter";
 import { Context } from "../Context";
 import { PointCf$ } from "../../data/feedGenerator";
 import { rxReplace } from "../../../directives/rxReplace";
@@ -19,19 +23,19 @@ export const quarterSubtitle = {
   [Quarter.fourth]: "x<0, y>0"
 };
 
-export const PointsGroupedByQuarter = (
+export const Grouping = (
   { html, ctx }: Context,
-  points: PointCf$
+  groupedPoints: QuarterGroupedPointCf$
 ) =>
   html`
     ${rxReplace(
-      groupPointsByQuarter(points),
+      groupedPoints,
       groups =>
         html`
           <style></style>
           <div class="columns quarter-charts-columns">
             ${repeat(
-              [Quarter.first, Quarter.second, Quarter.third, Quarter.fourth],
+              allQuarters,
               key => key,
               key => QuarterGroup(ctx, key, groups.get(key))
             )}

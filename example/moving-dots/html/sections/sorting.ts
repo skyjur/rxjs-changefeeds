@@ -1,10 +1,11 @@
-import { Context } from "./Context";
-import { PointCf$, Point$, Point } from "../data/feedGenerator";
-import { feedSortedList } from "../../../src/operators/feedSortedList";
+import { Context } from "../Context";
+import { PointCf$, Point$, Point } from "../../data/feedGenerator";
+import { feedSortedList } from "../../../../src/operators/feedSortedList";
+import { Array$ } from "../../../../src/_internal/types";
 
 export const SortedPoints = (
   { ctx, html, rxReplace, repeat, styleMap }: Context,
-  points: PointCf$
+  pointList$: Array$<Point$>
 ) =>
   html`
     <style>
@@ -27,11 +28,7 @@ export const SortedPoints = (
       }
     </style>
     ${rxReplace<Point$[]>(
-      points.pipe(
-        feedSortedList((a, b) => a.x - b.x, {
-          throttleIntervalTime: 100
-        })
-      ),
+      pointList$,
       pointList => html`
         <div
           class="sorted-points-container"
@@ -51,7 +48,7 @@ export const SortedPoints = (
                       point$,
                       point => html`
                         x=${(point.x > 0 ? " " : "") + point.x.toFixed(3)}
-                        ${SortedPointsBubble(ctx, point)}
+                        ${SlidingPoint(ctx, point)}
                       `
                     )}
                   </div>
@@ -63,7 +60,7 @@ export const SortedPoints = (
     )}
   `;
 
-export const SortedPointsBubble = (
+export const SlidingPoint = (
   { html, styleMap }: Context,
   { color, x }: Point
 ) => html`
