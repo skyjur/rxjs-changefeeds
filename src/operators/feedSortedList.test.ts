@@ -70,7 +70,7 @@ describe("operators/feedSortedList", () => {
       );
 
       const output = input.pipe(
-        feedSortedList((a, b) => a - b, { throttleIntervalTime: 1 }),
+        feedSortedList((a, b) => a - b, { throttleIntervalTime: 0 }),
         map(subjects => subjects.map(subject => subject.value))
       );
 
@@ -91,7 +91,7 @@ describe("operators/feedSortedList", () => {
       });
 
       const sortedList$ = input.pipe(
-        feedSortedList((a, b) => a - b, { throttleIntervalTime: 1 })
+        feedSortedList((a, b) => a - b, { throttleIntervalTime: 0 })
       );
 
       let one$ = new Subject();
