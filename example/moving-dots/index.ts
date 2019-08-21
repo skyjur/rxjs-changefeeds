@@ -21,7 +21,9 @@ import { feedGroupBy } from "../../src/operators/feedGroupBy";
 
 // input feed config:
 const updatesPerSec$ = new BehaviorSubject(20);
-const updateInterval$ = updatesPerSec$.pipe(map(val => 1000 / val));
+const updateInterval$ = updatesPerSec$.pipe(
+  map(val => (val === 0 ? 99999999 : 1000 / val))
+);
 const numOfPoints$ = new BehaviorSubject(12);
 
 // input feed:

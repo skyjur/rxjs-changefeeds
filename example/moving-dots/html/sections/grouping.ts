@@ -3,8 +3,9 @@ import { Context } from "../Context";
 import { PointCf$ } from "../../data/feedGenerator";
 import { rxReplace } from "../../../directives/rxReplace";
 import { repeat } from "lit-html/directives/repeat";
-import { PointsChartCanvas } from "../charts/pointsCanvas";
-import { Observable } from "rxjs";
+import { PointsChartCanvas } from "../feedOutput/pointsCanvas";
+import { Observable, of } from "rxjs";
+import { RawChangeFeed } from "../feedOutput/rawChangeFeed";
 
 export const quarterLabels = {
   [Quarter.first]: "1st",
@@ -57,6 +58,6 @@ export const QuarterGroup = (
           ${quarterSubtitle[quarter]}
         </small>
       </h3>
-      ${points ? PointsChartCanvas(ctx, points) : null}
+      ${PointsChartCanvas(ctx, points || of())} ${RawChangeFeed(points || of())}
     </div>
   `;

@@ -2,63 +2,91 @@ import { ChangeFeed$ } from "../../../../src/types";
 import { Point } from "../../data/feedGenerator";
 import { Context } from "../Context";
 import { cacheResult } from "../../../directives/cacheResult";
+import { directive, NodePart } from "lit-html";
+import { Unsubscribable, partition } from "rxjs";
 
 const size = 200;
 
-export const PointsChartCanvas = (
-  context: Context,
-  pointsCf$: ChangeFeed$<Point>
-) => cacheResult(pointsCf$, () => _PointsChartCanvas(context, pointsCf$));
+interface State {
+  _canvas?: HTMLCanvasElement;
+  _pointsCf$?: ChangeFeed$<Point>;
+  _interval?: any;
+  _sub?: Unsubscribable;
+}
 
-const _PointsChartCanvas = (
-  { document }: Context,
-  pointsCf$: ChangeFeed$<Point>
-) => {
-  const canvas = document.createElement("canvas");
-  canvas.setAttribute("width", `${size}`);
-  canvas.setAttribute("height", `${size}`);
-  const ctx = canvas.getContext("2d")!;
+export const PointsChartCanvas = directive(
+  ({ document }: Context, pointsCf$: ChangeFeed$<Point>) => (
+    part: NodePart & State
+  ) => {
+    const canvas = part._canvas || document.createElement("canvas");
 
-  const pointsMap = new Map<string, Point>();
-  let changes = 0;
-
-  const interval = setInterval(() => {
-    if (changes > 0) {
-      changes = 0;
-
-      const width = canvas.scrollWidth;
-      const height = canvas.scrollHeight;
-      ctx.clearRect(0, 0, width, height);
-      drawGrid(ctx, width, height);
-
-      redrawPoinsOnCanvas(
-        ctx,
-        pointsMap.values(),
-        canvas.scrollWidth,
-        canvas.scrollHeight
-      );
+    if (!part._canvas) {
+      part._canvas = canvas;
+      part.setValue(canvas);
+      canvas.setAttribute("width", `${size}`);
+      canvas.setAttribute("height", `${size}`);
     }
-  }, 1000 / 30); // 30 fps
 
-  pointsCf$.subscribe({
-    next(record) {
-      switch (record[0]) {
-        case "set":
-          changes += 1;
-          pointsMap.set(record[1], record[2]);
-          break;
-        case "del":
-          changes += 1;
-          pointsMap.delete(record[1]);
+    if (part._pointsCf$ === pointsCf$) {
+      return;
+    }
+
+    if (part._sub) {
+      clearInterval(part._interval);
+      part._sub.unsubscribe();
+    }
+
+    const pointsMap = new Map<string, Point>();
+    let changes = 1;
+
+    const interval = setInterval(() => {
+      if (canvas.getAttribute("width") !== size.toString()) {
+        const ctx = canvas.getContext("2d")!;
+        changes += 1;
+        ctx.clearRect(0, 0, canvas.scrollWidth, canvas.scrollHeight);
+        canvas.setAttribute("width", `${size}`);
+        canvas.setAttribute("height", `${size}`);
       }
-    },
-    complete() {
-      clearInterval(interval);
-    }
-  });
 
-  return canvas;
-};
+      if (changes > 0) {
+        changes = 0;
+
+        const ctx = canvas.getContext("2d")!;
+
+        const width = canvas.scrollWidth;
+        const height = canvas.scrollHeight;
+        ctx.clearRect(0, 0, width, height);
+        drawGrid(ctx, width, height);
+
+        redrawPoinsOnCanvas(
+          ctx,
+          pointsMap.values(),
+          canvas.scrollWidth,
+          canvas.scrollHeight
+        );
+      }
+    }, 1000 / 30); // 30 fps
+
+    pointsCf$.subscribe({
+      next(record) {
+        switch (record[0]) {
+          case "set":
+            changes += 1;
+            pointsMap.set(record[1], record[2]);
+            break;
+          case "del":
+            changes += 1;
+            pointsMap.delete(record[1]);
+        }
+      },
+      complete() {
+        setTimeout(() => clearInterval(interval), 100);
+      }
+    });
+
+    return canvas;
+  }
+);
 
 const margin = 5;
 

@@ -5,7 +5,8 @@ import { MultiChoiceInput } from "../../../common/html/MultiChoiceInput";
 import { PointCf$ } from "../../data/feedGenerator";
 import { quarterLabels, quarterSubtitle } from "./grouping";
 import { Quarter, allQuarters } from "../../data/quarter";
-import { PointsChartCanvas } from "../charts/pointsCanvas";
+import { PointsChartCanvas } from "../feedOutput/pointsCanvas";
+import { RawChangeFeed } from "../feedOutput/rawChangeFeed";
 
 export interface FilteringProps {
   selectedShades$: BehaviorSubject<Shade[]>;
@@ -36,12 +37,12 @@ export const Filtering = (
   { selectedShades$, selectedQuarters$, filteredPoints$ }: FilteringProps
 ) => html`
   <div class="columns">
-    <div class="column">
+    <div class="column is-one-fifth">
       <h3 class="subtitle">Shade</h3>
       ${MultiChoiceInput<Shade>(ctx, allShades, selectedShades$, ShadeLabel)}
     </div>
 
-    <div class="column">
+    <div class="column is-one-fifth">
       <h3 class="subtitle">Quarter</h3>
       ${MultiChoiceInput<Quarter>(
         ctx,
@@ -53,6 +54,10 @@ export const Filtering = (
 
     <div class="column">
       ${PointsChartCanvas(ctx, filteredPoints$)}
+    </div>
+
+    <div class="column">
+      ${RawChangeFeed(filteredPoints$)}
     </div>
   </div>
 `;

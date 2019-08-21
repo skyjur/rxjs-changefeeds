@@ -1,73 +1,185 @@
 import { rxReplace } from "../../../directives/rxReplace";
 import { cacheResult } from "../../../directives/cacheResult";
-import { ChangeFeed$ } from "../../../../src/types";
+import { ChangeFeed$, ChangeFeed } from "../../../../src/types";
 import { Context } from "../Context";
+import { render, NodePart, directive } from "lit-html";
+import { Unsubscribable, of, concat } from "rxjs";
 
-export const RawChangeFeed = (
-  context: Context,
-  changeFeed$: ChangeFeed$<any>
-) => cacheResult(changeFeed$, () => _RawChangeFeed(context, changeFeed$));
+export const RawChangeFeed = (changeFeed$: ChangeFeed$<any>) =>
+  cacheResult(changeFeed$, () => _RawChangeFeed(changeFeed$));
 
-export const _RawChangeFeed = (
-  context: Context,
-  changeFeed$: ChangeFeed$<any>
-) => {
-  const container = document.createElement("div");
-  container.style.display = "inline-block";
-  container.style.width = "300px";
-  container.style.height = "300px";
-  container.style.overflow = "scroll";
-  container.style.position = "relative";
-  const textHolders: HTMLElement[] = [];
-  for (let i = 0; i < 50; i++) {
-    const holder = document.createElement("pre");
-    holder.style.width = "300px";
-    holder.style.overflow = "hidden";
-    holder.style.position = "absolute";
-    holder.style.left = "0px";
-    holder.style.whiteSpace = "pre";
-    holder.style.lineHeight = "12px";
-    holder.style.fontSize = "10px";
-    textHolders.push(holder);
+interface Options {
+  height?: number;
+}
+
+interface State {
+  _container?: HTMLElement;
+  _feed?: ChangeFeed$<any>;
+  _top?: number;
+  _sub?: Unsubscribable;
+  _renderInterval?: any;
+}
+
+export const _RawChangeFeed = directive(
+  (changeFeed$: ChangeFeed$<any>, opts: Options = {}) => (
+    part: NodePart & State
+  ) => {
+    if (part._feed === changeFeed$) {
+      return;
+    }
+
+    if (part._sub) {
+      part._sub.unsubscribe();
+      delete part._sub;
+    }
+
+    if (part._renderInterval) {
+      clearInterval(part._renderInterval);
+      delete part._renderInterval;
+    }
+
+    if (!part._top) {
+      part._top = 0;
+    }
+
+    const container = part._container || _createContainer(opts);
+
+    if (!part._container) {
+      part.setValue(container);
+      part._container = container;
+    }
+
+    const lineRenderScheduler = new LineRenderScheduler();
+    type Line = {
+      lineNode: LineNode;
+      time: number;
+    };
+    const lines: Line[] = [];
+    const index = new Map();
+
+    part._renderInterval = setInterval(
+      () => lineRenderScheduler.nextFrame(),
+      100
+    );
+
+    part._sub = concat(
+      of("", "// Connected to new observable", ""),
+      changeFeed$,
+      of("", "// Observable has completed", "")
+    ).subscribe({
+      next(record) {
+        const [op, key] = record;
+        const time = Date.now();
+        if (
+          op === "set" &&
+          index.has(key) &&
+          lines[index.get(key)].time > time - 2000
+        ) {
+          const i = index.get(key);
+          lines[i].lineNode.update(record);
+          lines[i].time = Date.now();
+        } else {
+          const lineNode = new LineNode(
+            lineRenderScheduler,
+            (part._top! += 12),
+            record
+          );
+          lineNode.appendTo(container);
+          lines.push({ lineNode, time });
+          if (op === "set") {
+            index.set(key, lines.length - 1);
+          } else if (op === "del") {
+            index.delete(key);
+          }
+        }
+      },
+      error(err) {
+        this.next!(["error", err.message] as any);
+      }
+    });
+  }
+);
+
+const containerCss = "raw-chagnefeed-container";
+const lineCss = "raw-changefeed-line";
+
+const _createContainer = ({ height = 200 }: Options) => {
+  const d = document.createElement("div");
+  d.className = containerCss;
+  d.innerHTML = `
+      <style>
+        .${containerCss} {
+          height: ${height}px;
+          position: relative;
+          font-size: 10px;
+          overflow-y: scroll;
+          overflow-x: hidden;
+          font-family: monospace;
+        }
+        .${lineCss} {
+          line-height: 12px;
+          position: absolute;
+          left: 0px;
+          overflow: hidden;
+          white-space: pre;
+        }
+      </style>
+    `;
+  return d;
+};
+
+class LineRenderScheduler {
+  private scheduled = new Set<LineNode>();
+
+  schedule(lineNode: LineNode) {
+    this.scheduled.add(lineNode);
   }
 
-  const lines: string[] = [];
-
-  changeFeed$.subscribe({
-    next(val) {
-      lines.push(JSON.stringify(val));
-    },
-    error(err) {
-      lines.push(err.stack);
-    },
-    complete() {
-      lines.push("complete");
+  nextFrame() {
+    for (const val of this.scheduled) {
+      val.render();
     }
-  });
+    this.scheduled.clear();
+  }
+}
 
-  let position = 0;
-  let i = 0;
+class LineNode {
+  private node: HTMLElement;
+  private textNode: Text;
+  private updateCount = 1;
+  private value: any;
+  private renderTimeout?: any;
 
-  console.log("text holders", textHolders, textHolders[0]);
+  constructor(
+    private renderScheduler: LineRenderScheduler,
+    top: number,
+    value: any
+  ) {
+    const d = document.createElement("div");
+    d.className = lineCss;
+    d.style.top = top + "px";
+    this.value = value;
+    this.textNode = document.createTextNode("");
+    d.appendChild(this.textNode);
+    this.node = d;
+    this.render();
+  }
 
-  setInterval(() => {
-    const newLines = lines.splice(0);
-    const holder = textHolders[i];
+  update(value: any) {
+    this.value = value;
+    this.renderScheduler.schedule(this);
+  }
 
-    // console.log("i", i);
+  render() {
+    let { textNode, value } = this;
+    let text = typeof value === "string" ? value : JSON.stringify(value);
+    // shorten long numbers:
+    text = text.replace(/\d\.\d{9,}/g, match => match.substr(0, 5) + "…");
+    textNode.textContent = text;
+  }
 
-    holder.innerText = newLines.join("\n");
-    holder.style.height = newLines.length * 12 + "px";
-    holder.style.top = position + "px";
-
-    position += newLines.length * 12;
-
-    if (!holder.parentNode) {
-      container.appendChild(holder);
-    }
-
-    i = (i + 1) % textHolders.length;
-  }, 60);
-
-  return container;
-};
+  appendTo(container: HTMLElement) {
+    container.appendChild(this.node);
+    container.scrollTo(0, this.node.offsetTop);
+  }
+}

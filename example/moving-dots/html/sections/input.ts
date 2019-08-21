@@ -4,6 +4,7 @@ import { PointsChartCanvas } from "../feedOutput/pointsCanvas";
 import { PointCf$ } from "../../data/feedGenerator";
 import { BehaviorSubject } from "rxjs";
 import { RawChangeFeed } from "../feedOutput/rawChangeFeed";
+import { rxReplace } from "../../../directives/rxReplace";
 
 const updatePerSecScale: RangeScale = {
   min: 0,
@@ -25,30 +26,49 @@ export interface InputProps {
   pointsCf$: PointCf$;
 }
 
-export const Input = ({ html, ctx }: Context, props: InputProps) => html`
+export const Input = (
+  { html, ctx }: Context,
+  { numOfPoints$, updatesPerSec$, pointsCf$ }: InputProps
+) => html`
   <div class="columns">
     <div class="column">
-      <div class="field">
-        <label>Position updates per point per sec:</label>
-        <div class="control">
-          ${RangeInput(ctx, props.updatesPerSec$, updatePerSecScale)}
-        </div>
-      </div>
-
       <div class="field">
         <label>
           Num of points:
         </label>
         <div class="control">
-          ${RangeInput(ctx, props.numOfPoints$, numOfPointsScale)}
+          ${RangeInput(ctx, numOfPoints$, numOfPointsScale)}
         </div>
+      </div>
+
+      <div class="field">
+        ${SpeedButtons(ctx, updatesPerSec$)}
       </div>
     </div>
     <div class="column">
-      ${PointsChartCanvas(ctx, props.pointsCf$)}
+      ${PointsChartCanvas(ctx, pointsCf$)}
     </div>
     <div class="column">
-      ${RawChangeFeed(ctx, props.pointsCf$)}
+      ${RawChangeFeed(pointsCf$)}
     </div>
   </div>
 `;
+
+const SpeedButtons = (ctx: Context, speed$: BehaviorSubject<number>) =>
+  rxReplace(speed$, value => [
+    Button(ctx, "Stop", () => speed$.next(0), { disabled: value === 0 }),
+    Button(ctx, "Slow", () => speed$.next(0.75), {
+      disabled: value === 0.75
+    }),
+    Button(ctx, "Fast", () => speed$.next(20), { disabled: value === 20 })
+  ]);
+
+const Button = (
+  { html }: Context,
+  label: string,
+  onClick = () => undefined as void,
+  { disabled = false } = {}
+) =>
+  html`
+    <button @click=${onClick} .disabled=${disabled}>${label}</button>
+  `;
