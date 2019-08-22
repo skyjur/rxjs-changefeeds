@@ -8,6 +8,7 @@ export class Context {
   rxReplace = rxReplace;
   repeat = repeat;
   styleMap = styleMap;
+  window = window;
 
   get document(): Document {
     return window.document;

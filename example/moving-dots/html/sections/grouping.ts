@@ -33,13 +33,19 @@ export const Grouping = (
       groupedPoints,
       groups =>
         html`
-          <style></style>
           <div class="columns quarter-charts-columns">
-            ${repeat(
-              allQuarters,
-              key => key,
-              key => QuarterGroup(ctx, key, groups.get(key))
-            )}
+            <div class="column">
+              <div class="columns is-desktop">
+                ${QuarterGroup(ctx, Quarter.first, groups.get(Quarter.first))}
+                ${QuarterGroup(ctx, Quarter.second, groups.get(Quarter.second))}
+              </div>
+            </div>
+            <div class="column">
+              <div class="columns is-desktop">
+                ${QuarterGroup(ctx, Quarter.third, groups.get(Quarter.third))}
+                ${QuarterGroup(ctx, Quarter.fourth, groups.get(Quarter.fourth))}
+              </div>
+            </div>
           </div>
         `
     )}
@@ -58,6 +64,7 @@ export const QuarterGroup = (
           ${quarterSubtitle[quarter]}
         </small>
       </h3>
-      ${PointsChartCanvas(ctx, points || of())} ${RawChangeFeed(points || of())}
+      ${PointsChartCanvas(ctx, points || of())}
+      ${RawChangeFeed(points || of(), { height: 100, width: 200 })}
     </div>
   `;

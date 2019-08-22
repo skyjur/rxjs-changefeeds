@@ -1,45 +1,50 @@
 import { ChangeFeed$ } from "../../../../src/types";
 import { Point } from "../../data/feedGenerator";
 import { Context } from "../Context";
-import { cacheResult } from "../../../directives/cacheResult";
 import { directive, NodePart } from "lit-html";
-import { Unsubscribable, partition } from "rxjs";
+import { Unsubscribable } from "rxjs";
+import { isElementOutOfVisibleScreen } from "../utils";
 
 const size = 200;
 
 interface State {
-  _canvas?: HTMLCanvasElement;
-  _pointsCf$?: ChangeFeed$<Point>;
-  _interval?: any;
-  _sub?: Unsubscribable;
+  canvas?: HTMLCanvasElement;
+  pointsCf$?: ChangeFeed$<Point>;
+  interval?: any;
+  sub?: Unsubscribable;
 }
 
 export const PointsChartCanvas = directive(
-  ({ document }: Context, pointsCf$: ChangeFeed$<Point>) => (
-    part: NodePart & State
+  ({ window, document }: Context, pointsCf$: ChangeFeed$<Point>) => (
+    part: NodePart & { _state?: State }
   ) => {
-    const canvas = part._canvas || document.createElement("canvas");
+    const state = (part._state = part._state || {});
+    const canvas = state.canvas || document.createElement("canvas");
 
-    if (!part._canvas) {
-      part._canvas = canvas;
+    if (!state.canvas) {
+      state.canvas = canvas;
       part.setValue(canvas);
       canvas.setAttribute("width", `${size}`);
       canvas.setAttribute("height", `${size}`);
     }
 
-    if (part._pointsCf$ === pointsCf$) {
+    if (state.pointsCf$ === pointsCf$) {
       return;
     }
 
-    if (part._sub) {
-      clearInterval(part._interval);
-      part._sub.unsubscribe();
+    if (state.sub) {
+      clearInterval(state.interval);
+      state.sub.unsubscribe();
     }
 
     const pointsMap = new Map<string, Point>();
     let changes = 1;
 
-    const interval = setInterval(() => {
+    const interval = (state.interval = setInterval(() => {
+      if (isElementOutOfVisibleScreen(canvas, window)) {
+        return;
+      }
+
       if (canvas.getAttribute("width") !== size.toString()) {
         const ctx = canvas.getContext("2d")!;
         changes += 1;
@@ -65,7 +70,7 @@ export const PointsChartCanvas = directive(
           canvas.scrollHeight
         );
       }
-    }, 1000 / 30); // 30 fps
+    }, 1000 / 30)); // 30 fps
 
     pointsCf$.subscribe({
       next(record) {
