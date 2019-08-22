@@ -1,11 +1,28 @@
 import { Context } from "../Context";
 import { PointCf$, Point$, Point } from "../../data/feedGenerator";
-import { feedSortedList } from "../../../../src/operators/feedSortedList";
 import { Array$ } from "../../../../src/_internal/types";
+import { Subject, BehaviorSubject } from "rxjs";
+import {
+  SortBy,
+  SortField,
+  SortDir,
+  getSortFieldLabel,
+  getSortDirLabel
+} from "../../data/sorting";
+import { rxReplace } from "../../../directives/rxReplace";
+import { combineLatest } from "rxjs";
+import { cacheResult } from "../../../directives/cacheResult";
+import { SelectInput } from "../../../common/html/SelectInput";
+
+export interface SortingInput {
+  sortField$: Subject<SortField>;
+  sortDir$: Subject<SortDir>;
+}
 
 export const SortedPoints = (
   { ctx, html, rxReplace, repeat, styleMap }: Context,
-  pointList$: Array$<Point$>
+  pointList$: Array$<Point$>,
+  sortingInput: SortingInput
 ) =>
   html`
     <style>
@@ -27,6 +44,11 @@ export const SortedPoints = (
         top: 0.35em;
       }
     </style>
+
+    <div>
+      Sort by: ${SortByInputs(ctx, sortingInput)}
+    </div>
+
     ${rxReplace<Point$[]>(
       pointList$,
       pointList => html`
@@ -58,6 +80,23 @@ export const SortedPoints = (
         </div>
       `
     )}
+  `;
+
+export const SortByInputs = (
+  { html, ctx }: Context,
+  { sortField$, sortDir$ }: SortingInput
+) =>
+  html`
+    ${SelectInput(ctx, {
+      subject$: sortField$,
+      options: [SortField.xAxis, SortField.yAxis],
+      getLabel: getSortFieldLabel
+    })}
+    ${SelectInput(ctx, {
+      subject$: sortDir$,
+      options: [SortDir.Asc, SortDir.Desc],
+      getLabel: getSortDirLabel
+    })}
   `;
 
 export const SlidingPoint = (

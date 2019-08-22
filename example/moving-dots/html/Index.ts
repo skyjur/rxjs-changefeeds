@@ -33,6 +33,16 @@ export const Index = ({ html }: Context, props: IndexProps) => {
 
     <section class="container">
       <h2 class="title is-4 is-spaced">Filtering</h2>
+      <div class="content">
+        <p>
+          Filter changefeed using observable filter function.
+        </p>
+        <p>
+          Note how items are deleted from changefeed (using quarter filtering)
+          when their updated values no longer match the filter and how they
+          appear if their values match the filter.
+        </p>
+      </div>
       ${props.filtering}
     </section>
 
@@ -40,6 +50,20 @@ export const Index = ({ html }: Context, props: IndexProps) => {
 
     <section class="container">
       <h2 class="title is-4 is-spaced">Group by</h2>
+
+      <div class="content">
+        <p>
+          Group changfeed using key producing function. Result is
+          <span>Map()</span>
+          where each result of key function, and value is a new changefeed
+          filtered by matching values.
+        </p>
+        <p>
+          Note how values are deleted from group when their grouping key changes
+          and move on different group. And how group's changefeed is completed
+          once no more items are in it thus releasing any listeners.
+        </p>
+      </div>
       ${props.grouping}
     </section>
 
@@ -47,6 +71,14 @@ export const Index = ({ html }: Context, props: IndexProps) => {
 
     <section class="container">
       <h2 class="title is-4 is-spaced">Sorted list</h2>
+
+      <div class="content">
+        <p>
+          Transform changfeed into sorted list using comparison function where
+          each row is observable of value in the changefeed.<br /><br />
+        </p>
+      </div>
+
       ${props.sorting}
     </section>
   `;

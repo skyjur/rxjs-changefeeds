@@ -1,7 +1,7 @@
 import { deepStrictEqual } from "assert";
 import { TestScheduler } from "rxjs/testing";
 import { ChangeFeed$ } from "../types";
-import { feedSortedList, Comparator } from "./feedSortedList";
+import { feedSortedList, Comparator, Comparator$ } from "./feedSortedList";
 import { map, switchMap, first, mergeMap } from "rxjs/operators";
 import { of, Subject, Unsubscribable } from "rxjs";
 
@@ -23,7 +23,9 @@ describe("operators/feedSortedList", () => {
         }
       );
 
-      const comparator: Comparator<number> = (a, b) => a - b;
+      const comparator: Comparator$<number> = of(
+        (a: number, b: number) => a - b
+      );
 
       const output = input.pipe(
         feedSortedList(comparator, { throttleTime: 0, scheduler }),

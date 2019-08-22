@@ -13,6 +13,7 @@ import { ChangeFeed, ChangeFeed$ } from "../types";
 import { changeFeedHandler } from "../utils";
 
 export type Comparator<T> = (a: T, b: T) => number;
+export type Comparator$<T> = Observable<Comparator<T>>;
 
 interface Options {
   throttleTime?: number;
@@ -20,69 +21,76 @@ interface Options {
 }
 
 export function feedSortedList<Value, Key = any>(
-  cmp: Comparator<Value>,
+  comparator: Comparator<Value> | Comparator$<Value>,
   { throttleTime = 100, scheduler = asyncScheduler }: Options = {}
 ): OperatorFunction<ChangeFeed<Value, Key>, Array<BehaviorSubject<Value>>> {
   return (input: ChangeFeed$<Value>) => {
     return new Observable(subscriber => {
       const data = new Map<Key, BehaviorSubject<Value>>();
+      let cmp: Comparator<Value> | null =
+        typeof comparator === "function" ? comparator : null;
       let keySortIndex = new Map<Key, number>();
       let sortedKeys: Key[] = [];
 
-      let pendingFlushWork: Unsubscribable | null = null;
+      let pendingFlush: Unsubscribable | null = null;
 
-      const flushUpdatesNow = () => {
+      const flush = () => {
         const keys = Array.from(data.keys());
-        sortedKeys = keys.sort((key1, key2) => {
-          return cmp(data.get(key1)!.value, data.get(key2)!.value);
-        });
+        sortedKeys = keys.sort((key1, key2) =>
+          cmp!(data.get(key1)!.value, data.get(key2)!.value)
+        );
         keySortIndex = new Map(sortedKeys.map((key, index) => [key, index]));
         subscriber.next(sortedKeys.map(key => data.get(key)!));
-        pendingFlushWork = null;
+        pendingFlush = null;
       };
 
-      const scheduleFlushUpdates = () => {
-        if (!pendingFlushWork) {
-          pendingFlushWork = scheduler.schedule(flushUpdatesNow, throttleTime);
+      const scheduleFlush = () => {
+        if (!pendingFlush) {
+          pendingFlush = scheduler.schedule(flush, throttleTime);
         }
       };
 
+      const cmpSub =
+        typeof comparator !== "function" &&
+        comparator.subscribe({
+          next(newCmp) {
+            if (newCmp && newCmp !== cmp) {
+              cmp = newCmp;
+              scheduleFlush();
+            }
+          }
+        });
+
       const sub = input.subscribe({
         next: changeFeedHandler({
-          initializing() {
-            // do nothing
-          },
-          ready() {
-            // do nothing
-          },
           set(key, newValue) {
             if (data.has(key)) {
               data.get(key)!.next(newValue);
-              if (!pendingFlushWork) {
+              if (cmp && !pendingFlush) {
                 const i = keySortIndex.get(key)!;
                 if (i > 0) {
                   const valueLeft = data.get(sortedKeys[i - 1])!.value;
                   if (cmp(valueLeft, newValue) > 0) {
-                    scheduleFlushUpdates();
+                    scheduleFlush();
                   }
                 }
                 if (i < sortedKeys.length - 1) {
                   const valueRight = data.get(sortedKeys[i + 1])!.value;
                   if (cmp(newValue, valueRight) > 0) {
-                    scheduleFlushUpdates();
+                    scheduleFlush();
                   }
                 }
               }
             } else {
               data.set(key, new BehaviorSubject(newValue));
-              scheduleFlushUpdates();
+              scheduleFlush();
             }
           },
           del(key) {
             if (data.has(key)) {
               data.get(key)!.complete();
               data.delete(key);
-              scheduleFlushUpdates();
+              scheduleFlush();
             }
           }
         }),
@@ -99,8 +107,9 @@ export function feedSortedList<Value, Key = any>(
 
       return () => {
         sub.unsubscribe();
-        if (pendingFlushWork) {
-          pendingFlushWork.unsubscribe();
+        cmpSub && cmpSub.unsubscribe();
+        if (pendingFlush) {
+          pendingFlush.unsubscribe();
         }
         for (const subject of data.values()) {
           subject.complete();
