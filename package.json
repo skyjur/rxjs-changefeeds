@@ -1,16 +1,17 @@
 {
-  "name": "rx-js-changefeeds",
+  "name": "rxjs-changefeeds",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "check": "tsc --noEmit && tslint --project .",
-    "tsc:watch": "tsc --noEmit --watch",
     "fix": "tslint --fix --project .",
     "format": "prettier src/**/* --write",
     "test": "mocha",
     "test:watch": "mocha --watch",
-    "example": "parcel example/index.html",
+    "test:readme": "markdown-doctest",
+    "run:example": "parcel example/index.html",
+    "build:dist": "tsc --build tsconfig.dist.json",
     "build:example": "parcel build example/index.html -d docs/example --public-url ./"
   },
   "repository": {
@@ -35,6 +36,7 @@
     "lit-element": "^2.2.1",
     "lit-html": "^1.1.1",
     "lodash": "^4.17.15",
+    "markdown-doctest": "../markdown-doctest",
     "mocha": "^6.1.4",
     "prettier": "^1.18.2",
     "rx-lit-html": "git+https://github.com/skyjur/rx-lit-html.git",

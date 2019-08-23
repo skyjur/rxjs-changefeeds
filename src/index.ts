@@ -7,4 +7,6 @@ export {
   feedCombine5
 } from "./operators/feedCombine";
 export { feedFilter } from "./operators/feedFilter";
+export { feedFilterRx } from "./operators/feedFilterRx";
+export { feedGroupBy } from "./operators/feedGroupBy";
 export {} from "./operators/feedToMap";
