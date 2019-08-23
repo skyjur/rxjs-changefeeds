@@ -497,4 +497,4 @@ var n,t=arguments[3],r=require("buffer").Buffer;(function(){var r,e=200,u="Unsup
 },{"./data/feedGenerator":"/of3","rxjs":"iRqj","lit-html":"SP/d","./html/Context":"ngaj","./html":"q5Wp","rxjs/operators":"cVrl","./data/shade":"bNvB","./data/quarter":"i7o1","./html/sections/input":"vwy2","./html/sections/grouping":"NqrY","./html/sections/sorting":"Hxtm","../../src/operators/feedSortedList":"b9zH","./html/sections/filtering":"0oKy","../../src/operators/feedFilterRx":"PR4r","../../src/operators/feedGroupBy":"DYdo","./data/sorting":"cAVh"}],"7QCb":[function(require,module,exports) {
 "use strict";Object.defineProperty(exports,"__esModule",{value:!0}),require("./moving-dots");
 },{"./moving-dots":"52LM"}]},{},["7QCb"], null)
-//# sourceMappingURL=/example.f4afa526.js.map
+//# sourceMappingURL=example.f4afa526.js.map
