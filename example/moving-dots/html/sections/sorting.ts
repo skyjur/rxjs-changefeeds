@@ -1,17 +1,13 @@
 import { Context } from "../Context";
-import { PointCf$, Point$, Point } from "../../data/feedGenerator";
+import { Point$, Point } from "../../data/feedGenerator";
 import { Array$ } from "../../../../src/_internal/types";
-import { Subject, BehaviorSubject } from "rxjs";
+import { Subject } from "rxjs";
 import {
-  SortBy,
   SortField,
   SortDir,
   getSortFieldLabel,
   getSortDirLabel
 } from "../../data/sorting";
-import { rxReplace } from "../../../directives/rxReplace";
-import { combineLatest } from "rxjs";
-import { cacheResult } from "../../../directives/cacheResult";
 import { SelectInput } from "../../../common/html/SelectInput";
 
 export interface SortingInput {
@@ -70,6 +66,7 @@ export const SortedPoints = (
                       point$,
                       point => html`
                         x=${(point.x > 0 ? " " : "") + point.x.toFixed(3)}
+                        y=${(point.y > 0 ? " " : "") + point.y.toFixed(3)}
                         ${SlidingPoint(ctx, point)}
                       `
                     )}
@@ -107,7 +104,7 @@ export const SlidingPoint = (
     class="sorted-points-bubble"
     style=${styleMap({
       backgroundColor: color,
-      left: (170 + x * 100).toFixed(2) + "px"
+      left: (260 + x * 100).toFixed(2) + "px"
     })}
   ></i>
 `;

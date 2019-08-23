@@ -4,6 +4,7 @@ import { map, switchMap } from "rxjs/operators";
 import { ChangeFeed } from "../../../src/types";
 import { number$ } from "../../../src/_internal/types";
 import { AZSequenceGenerator } from "../../sample-data/SequenceGenerator";
+import { randomizedInterval } from "../../sample-data/utils";
 
 export interface Point {
   color: string;
@@ -58,7 +59,11 @@ export const PointsChangeFeed = (
 export const VariableIntervalPoint = (updateIntervalValue: number$) => {
   let point = new RandomPointGenerator();
   return updateIntervalValue.pipe(
-    switchMap(intervalValue => interval(intervalValue)),
+    switchMap(intervalValue =>
+      intervalValue < 200
+        ? interval(intervalValue)
+        : randomizedInterval(intervalValue)
+    ),
     map(() => point.next())
   );
 };

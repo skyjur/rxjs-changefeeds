@@ -1,10 +1,18 @@
-import { Observable, OperatorFunction, Unsubscribable } from "rxjs";
+import { Observable, OperatorFunction, Unsubscribable, of } from "rxjs";
 import { ChangeFeed, ChangeFeed$ } from "../types";
 import { changeFeedHandler } from "../utils";
 
+interface FilterFunction<Value> {
+  (object: Value): boolean;
+}
+
+type FilterFunction$<Value> = Observable<FilterFunction<Value>>;
+
 export function feedFilterRx<Value = any, Key = any>(
-  predicate$: Observable<(a: Value) => boolean>
+  predicate: FilterFunction$<Value> | FilterFunction<Value>
 ): OperatorFunction<ChangeFeed<Value, Key>, ChangeFeed<Value>> {
+  const predicate$: FilterFunction$<Value> =
+    typeof predicate === "function" ? of(predicate) : predicate;
   return (feed: ChangeFeed$<Value>) => {
     return new Observable(subscriber => {
       const excluded = new Map<Key, Value>();

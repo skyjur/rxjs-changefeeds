@@ -10,7 +10,8 @@
     "format": "prettier src/**/* --write",
     "test": "mocha",
     "test:watch": "mocha --watch",
-    "example": "parcel example/index.html"
+    "example": "parcel example/index.html",
+    "build:example": "parcel build example/index.html -d docs/example"
   },
   "repository": {
     "type": "git",
@@ -29,6 +30,7 @@
     "bulma": "^0.7.5",
     "bulma-extensions": "^6.2.7",
     "cross-env": "^5.2.0",
+    "cssnano": "^4.1.10",
     "faker": "^4.1.0",
     "lit-element": "^2.2.1",
     "lit-html": "^1.1.1",

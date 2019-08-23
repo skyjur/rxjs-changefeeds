@@ -7,11 +7,13 @@ import { quarterLabels, quarterSubtitle } from "./grouping";
 import { Quarter, allQuarters } from "../../data/quarter";
 import { PointsChartCanvas } from "../feedOutput/pointsCanvas";
 import { RawChangeFeed } from "../feedOutput/rawChangeFeed";
+import { Array$ } from "../../../../src/_internal/types";
 
 export interface FilteringProps {
   selectedShades$: BehaviorSubject<Shade[]>;
   selectedQuarters$: BehaviorSubject<Quarter[]>;
   filteredPoints$: PointCf$;
+  shadeChoices$: Array$<Shade>;
 }
 
 export const shadeLabels: { [key in Shade]: string } = {
@@ -33,13 +35,20 @@ const QuarterLabel = ({ html }: Context, quarter: Quarter) =>
   `;
 
 export const Filtering = (
-  { ctx, html }: Context,
-  { selectedShades$, selectedQuarters$, filteredPoints$ }: FilteringProps
+  { ctx, html, rxReplace }: Context,
+  {
+    selectedShades$,
+    selectedQuarters$,
+    filteredPoints$,
+    shadeChoices$
+  }: FilteringProps
 ) => html`
   <div class="columns">
     <div class="column is-one-fifth">
       <h3 class="subtitle">Shade</h3>
-      ${MultiChoiceInput<Shade>(ctx, allShades, selectedShades$, ShadeLabel)}
+      ${rxReplace(shadeChoices$, shades =>
+        MultiChoiceInput<Shade>(ctx, shades, selectedShades$, ShadeLabel)
+      )}
     </div>
 
     <div class="column is-one-fifth">

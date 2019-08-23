@@ -4,7 +4,13 @@ import { render } from "lit-html";
 import { Context } from "./html/Context";
 import { Index } from "./html";
 import { map, share } from "rxjs/operators";
-import { allShades, Shade, pointShadeFilter } from "./data/shade";
+import {
+  allShades,
+  Shade,
+  pointShadeFilter,
+  getShade,
+  getPointShade
+} from "./data/shade";
 import {
   allQuarters,
   Quarter,
@@ -22,6 +28,7 @@ import { Filtering } from "./html/sections/filtering";
 import { feedFilterRx } from "../../src/operators/feedFilterRx";
 import { feedGroupBy } from "../../src/operators/feedGroupBy";
 import { SortBy, pointCmp, SortField, SortDir } from "./data/sorting";
+import { Array$ } from "../../src/_internal/types";
 
 /**
  * INPUT CONFIG
@@ -47,12 +54,16 @@ const filteredPoints$ = pointsCf$.pipe(
   feedFilterRx(selectedQuarters$.pipe(map(quarterFilter)))
 );
 
+// only display available shades
+const shadeChoices$: Array$<Shade> = pointsCf$.pipe(
+  feedGroupBy<Shade, Point>(getPointShade),
+  map(groups => Array.from(groups.keys()).sort())
+);
+
 /**
  * GROUPING SECTION STATE
  */
-const groupedPoints$ = pointsCf$.pipe(
-  feedGroupBy<Quarter, Point, string>(getQuarter)
-);
+const groupedPoints$ = pointsCf$.pipe(feedGroupBy<Quarter, Point>(getQuarter));
 
 /**
  * SORTING SECTION
@@ -89,7 +100,8 @@ render(
     filtering: Filtering(context, {
       selectedShades$,
       selectedQuarters$,
-      filteredPoints$
+      filteredPoints$,
+      shadeChoices$
     })
   }),
   document.getElementById("root")!
