@@ -1,16 +1,19 @@
-# rx-js-changefeeds
+# rxjs-changefeed
 
-Collection of helpers to work with changefeeds.
+Rxjs helpers to build things on top of changefeeds.
 
-Example: [demo](https://skyjur.github.io/rx-js-changefeeds/example) [code](example/moving-dots/index.ts)
+Api docs: [bellow](#API)
+Example: [demo](https://skyjur.github.io/rxjs-changefeeds/example), [code](example/moving-dots/index.ts)
 
-## What are changefeeds?
+### What are changefeeds?
 
-Change feeds are streams of object mutation. They are very useful to keep always up to date with most latest remote state changes.
+Changefeed is a log of `set <key> <value>` and `del <key> <value>` operations. This allows to express a collection of objects as observable in an efficient way.
 
-Changefeeds are baked in some database systems: [CouchDb](https://docs.couchdb.org/en/2.2.0/api/database/changes.html), [RethinkDB](https://rethinkdb.com/docs/changefeeds/javascript/), [MongoDB](https://www.mongodb.com/blog/post/an-introduction-to-change-streams).
+Many modern databases come with built in suppory for changefeeds: [CouchDb](https://docs.couchdb.org/en/2.2.0/api/database/changes.html), [RethinkDB](https://rethinkdb.com/docs/changefeeds/javascript/), [MongoDB](https://www.mongodb.com/blog/post/an-introduction-to-change-streams).
 
-Changefeeds within this library are expected to look like this:
+## Data model
+
+Example:
 
 ```js
 [
@@ -24,55 +27,108 @@ Changefeeds within this library are expected to look like this:
 ];
 ```
 
-## What does this libary do about changefeeds?
-
-Similarly how `rxjs` comes with great set of primitives like `map()`, `filter()`, `goupBy()`, etc idea is to build efficient common primitives that solve common problems relating to transformation of changefeeds.
-
 # API
 
-## operators: feedFilter
+## operators/feedFilter
 
-Like rxjs [filter](https://www.learnrxjs.io/operators/filtering/filter.html) but will transforms `set` events to `del` when old value pass filter but new value does not.
+Transforms observable changfeed into filtered changefeed.
 
-Can take observable filter function, thus it's easy to implement reactive UIs that react to filter options.
+Will transforms `set` events to `del` when old value pass filter but new value does not.
 
-```es6
+Can take observable filter function.
+
+Example, using static filter function:
+
+```js
 import { Subject } from "rxjs";
 import { feedFilterRx } from "rxjs-changefeeds";
 
 const filter = value => value < 2;
 const input = new Subject();
-const output = input.pipe(feedFilterRx(filter)).subscribe(__push);
+const output = input.pipe(feedFilterRx(filter)).subscribe(console.log);
 
 input.next(["set", "x", 1]);
-_expect(["set", "x", 1]);
+// output: ["set","x",1]
 
 input.next(["set", "y", 2]);
-_expect(undefined);
+// no output
 
 input.next(["set", "x", 2]);
-_expect(["del", "x"]);
+// output: ["del","x"]
 ```
 
-Observable filter example:
+Example with observable filter function. Notice how only necessary updates are boradcasted after filter value changes.
 
-```es6
-import { Subject, BehaviorSubject } from "rxjs";
+```js
+import { BehaviorSubject, Subject } from "rxjs";
 import { feedFilterRx } from "rxjs-changefeeds";
 
-const filter = new BehaviorSubject(value => value < 2);
+const filter = new BehaviorSubject(value => value < 3);
+
 const input = new Subject();
-const output = input.pipe(feedFilterRx(filter)).subscribe(__push);
+const result = input.pipe(feedFilterRx(filter));
+result.subscribe(console.log);
 
-input.next(["set", "x", 1]);
-__expect(["set", "x", 1]);
-
-input.next(["set", "y", 2]);
-__expect(undefined);
+input.next(["set", "one", 1]);
+input.next(["set", "two", 2]);
+input.next(["set", "three", 3]);
+// output:
+// ["set","one",1]
+// ["set","two",2]
 
 filter.next(value => value > 1);
-__expect(["del", "x"]);
-__expect(["set", "y", 2]);
+// output:
+// ["del","one"]
+// ["set","three",3]
+```
+
+Note that when input observable completes, result also completes and filter is unsubscribed.
+
+## operators/feedGroupBy
+
+Signature: `feedGroupBy( keyFunction: (value, key) => GroupKey )`
+
+Splits changefeed into multiple changefeeds using key function. Result is:
+
+    Map<GroupKey, Observable<ChangeFeed>>
+
+When `set` event has effect on previous group key, it triggers two events:
+
+1. `del` event in old group.
+2. `set` in new group
+
+When there are no more items left in a group, group's observable completes.
+
+```js
+import { Subject } from "rxjs";
+import { mergeMap, map, do } from "rxjs/operators";
+import { feedGroupBy } from "rxjs-changefeeds";
+
+const input = new Subject();
+
+const result = input.pipe(feedGroupBy(num => (num % 2 ? "odd" : "even")));
+
+result.pipe(
+  do(groups => console.log("keys:", ...groups.keys())),
+ mergeMap(groups => [...groups.entries()]),
+ 
+)
+
+input.next(["set", "x", 1]);
+// output:
+// keys: odd
+// odd: ["set","x",1]
+
+input.next(["set", "y", 2]);
+// output:
+// keys: odd even
+// even: ["set","y",2]
+
+input.next(["set", "x", 2]);
+// output:
+// odd: ["del","x"]
+// even: ["set","x",2]
+// keys: even
 ```
 
 ## operators/feedCombine
@@ -87,6 +143,8 @@ Like rxjs [combineLatest](https://www.learnrxjs.io/operators/combination/combine
 
 ## ChangeFeedReplay
 
+Useful when necessary to convert from hot changefeed to cold changefeed.
+
 Similar to [ChangeFeedReplay](https://www.learnrxjs.io/subjects/replaysubject.html), but replays only last record per key.
 
 ```es6
@@ -98,7 +156,8 @@ subject.next(["set", 1, "one"]);
 subject.next(["set", 2, "two"]);
 subject.next(["set", 1, "onePlus"]);
 
-subject.subscribe(__push);
-__expect(["set", 1, "onePlus"]);
-__expect(["set", 2, "two"]);
+subject.subscribe(console.log);
+// output:
+// ["set",1,"onePlus"]
+// ["set",2,"two"]
 ```
