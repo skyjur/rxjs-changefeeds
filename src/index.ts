@@ -9,4 +9,5 @@ export {
 export { feedFilter } from "./operators/feedFilter";
 export { feedFilterRx } from "./operators/feedFilterRx";
 export { feedGroupBy } from "./operators/feedGroupBy";
-export {} from "./operators/feedToMap";
+export { feedSortedList } from "./operators/feedSortedList";
+export { feedToKeyValueMap } from "./operators/feedToKeyValueMap";

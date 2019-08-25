@@ -151,6 +151,108 @@ input.complete();
 // even: complete.
 ```
 
+## operators/feedSortedList
+
+Signature: `feedSortedList( cmpFunction: (a, b) => number )`
+
+Transform observable changefeed into observable sorted list. Each item in the list is BehaviorSubject of the element.
+
+```js
+import { Subject, queueScheduler, of, list } from "rxjs";
+import { mergeMap, map, tap, distinct } from "rxjs/operators";
+import { feedSortedList } from "rxjs-changefeeds";
+
+const input = new Subject();
+
+const list$ = input.pipe(
+  feedSortedList((a, b) => a - b, {
+    // change async dispatching to synchronous dispatching:
+    throttleTime: null
+  })
+);
+
+// Log sorted list observable:
+list$.subscribe({
+  next(list) {
+    console.log("list:", list.map(value$ => value$.key));
+  },
+  complete() {
+    console.log("list: complete");
+  }
+});
+
+// Log inner (value) observable:
+const flatValues$ = list$.pipe(
+  mergeMap(list => of(...list)),
+  distinct()
+);
+
+flatValues$.subscribe({
+  next(value$) {
+    value$.subscribe({
+      next(value) {
+        console.log(`flatValues[${value$.key}]:`, value);
+      },
+      complete() {
+        console.log(`flatValues[${value$.key}]: complete.`);
+      }
+    });
+  }
+});
+
+input.next(["set", "x", 1]);
+// output:
+// list: ["x"]
+// flatValues[x]: 1
+
+input.next(["set", "y", 2]);
+// output:
+// list: ["x","y"]
+// flatValues[y]: 2
+
+// If order does not change no list update is triggered:
+input.next(["set", "y", 3]);
+// output:
+// flatValues[y]: 3
+
+// deletion completes value observable and removes it from list:
+input.next(["del", "x"]);
+// output:
+// list: ["y"]
+// flatValues[x]: complete.
+```
+
+## operators/feedToKeyValueMap
+
+Transform `Changefeed<Value, Key>` to `Map<Key, Value>`.
+
+```js
+import { Subject, queueScheduler, of, list } from "rxjs";
+import { mergeMap, map, tap, distinct } from "rxjs/operators";
+import { feedToKeyValueMap } from "rxjs-changefeeds";
+
+const input = new Subject();
+
+input
+  .pipe(
+    feedToKeyValueMap(),
+    map(keyValues => Array.from(keyValues.entries()))
+  )
+  .subscribe(console.log);
+
+input.next(["set", "x", 1]);
+// output: [["x",1]]
+
+input.next(["set", "y", 2]);
+// output: [["x",1],["y",2]]
+
+input.next(["set", "x", 3]);
+// output: [["x",3],["y",2]]
+
+input.next(["del", "x"]);
+// output: [["y",2]]
+```
+
 ## operators/feedCombine
 
 `- feedCombine`

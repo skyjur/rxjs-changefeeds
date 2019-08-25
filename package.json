@@ -12,18 +12,19 @@
     "test:readme": "markdown-doctest",
     "run:example": "parcel example/index.html",
     "build:dist": "tsc --build tsconfig.dist.json",
+    "build:doc": "typedoc",
     "build:example": "parcel build example/index.html -d docs/example --public-url ./"
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/skyjur/rx-js-changefeeds.git"
+    "url": "git+ssh://git@github.com/skyjur/rxjs-changefeeds.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/skyjur/rx-js-changefeeds/issues"
+    "url": "https://github.com/skyjur/rxjs-changefeeds/issues"
   },
-  "homepage": "https://github.com/skyjur/rx-js-changefeeds#readme",
+  "homepage": "https://github.com/skyjur/rxjs-changefeeds#readme",
   "devDependencies": {
     "@types/lodash": "^4.14.136",
     "@types/mocha": "^5.2.7",
@@ -36,7 +37,7 @@
     "lit-element": "^2.2.1",
     "lit-html": "^1.1.1",
     "lodash": "^4.17.15",
-    "markdown-doctest": "../markdown-doctest",
+    "markdown-doctest": "file:../markdown-doctest",
     "mocha": "^6.1.4",
     "prettier": "^1.18.2",
     "rx-lit-html": "git+https://github.com/skyjur/rx-lit-html.git",
@@ -45,6 +46,7 @@
     "ts-node": "^8.3.0",
     "tslint": "^5.18.0",
     "tslint-config-standard": "^8.0.1",
+    "typedoc": "^0.15.0",
     "typescript": "^3.5.3",
     "typescript-lit-html-plugin": "^0.9.0"
   },

@@ -10,7 +10,7 @@ import { ChangeFeed, ChangeFeed$ } from "../types";
 
 type Output<T> = Map<string, BehaviorSubject<T>>;
 
-export function feedToMap<Value>(): OperatorFunction<
+export function feedToObservablesMap<Value>(): OperatorFunction<
   ChangeFeed<Value>,
   Output<Value>
 > {

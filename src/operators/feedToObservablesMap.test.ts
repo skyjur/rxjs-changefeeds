@@ -2,7 +2,7 @@ import { of } from "rxjs";
 import { map, mergeMap, take } from "rxjs/operators";
 import { TestScheduler } from "rxjs/testing";
 import { ChangeFeed$ } from "../types";
-import { feedToMap } from "./feedToMap";
+import { feedToObservablesMap } from "./feedToObservablesMap";
 
 const { deepStrictEqual } = require("assert");
 
@@ -24,7 +24,7 @@ describe("changefeed.operators.feedToMap", () => {
           }
         );
 
-        const output = input.pipe(feedToMap<number>());
+        const output = input.pipe(feedToObservablesMap<number>());
 
         const values = output.pipe(mergeMap(data => data.get("1")!));
 
@@ -45,7 +45,7 @@ describe("changefeed.operators.feedToMap", () => {
           }
         );
 
-        const output = input.pipe(feedToMap<number>());
+        const output = input.pipe(feedToObservablesMap<number>());
 
         const values = output.pipe(mergeMap(data => data.get("1") || of()!));
 
@@ -65,7 +65,7 @@ describe("changefeed.operators.feedToMap", () => {
           }
         );
 
-        const output = input.pipe(feedToMap<number>());
+        const output = input.pipe(feedToObservablesMap<number>());
 
         const keys = output.pipe(map(data => Array.from(data.keys())));
 
@@ -86,7 +86,7 @@ describe("changefeed.operators.feedToMap", () => {
           }
         );
 
-        const output = input.pipe(feedToMap<number>());
+        const output = input.pipe(feedToObservablesMap<number>());
 
         const keys = output.pipe(map(data => Array.from(data.keys())));
 
@@ -107,7 +107,7 @@ describe("changefeed.operators.feedToMap", () => {
           }
         );
 
-        const output = input.pipe(feedToMap<number>());
+        const output = input.pipe(feedToObservablesMap<number>());
 
         const keys = output.pipe(map(data => Array.from(data.keys())));
 

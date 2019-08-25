@@ -8,7 +8,10 @@
       "script": "test:readme",
       "problemMatcher": {
         "owner": "javascript",
-        "fileLocation": ["relative", "${workspaceFolder}"],
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}"
+        ],
         "pattern": [
           {
             "regexp": "^Failed - ([^\\s].*):(\\d+):(\\d+)$",
@@ -22,6 +25,11 @@
     {
       "type": "npm",
       "script": "build:dist",
+      "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "build:example",
       "problemMatcher": []
     }
   ]

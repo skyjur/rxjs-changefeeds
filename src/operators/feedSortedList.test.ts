@@ -1,11 +1,15 @@
 import { deepStrictEqual } from "assert";
 import { TestScheduler } from "rxjs/testing";
-import { ChangeFeed$ } from "../types";
-import { feedSortedList, Comparator, Comparator$ } from "./feedSortedList";
-import { map, switchMap, first, mergeMap } from "rxjs/operators";
-import { of, Subject, Unsubscribable } from "rxjs";
+import { ChangeFeed$, ChangeFeed } from "../types";
+import { feedSortedList } from "./feedSortedList";
+import { map, switchMap } from "rxjs/operators";
+import { of, concat, Observable } from "rxjs";
 
 describe("operators/feedSortedList", () => {
+  type TestCf = ChangeFeed<number, "x" | "y">;
+  type TestCf$ = Observable<TestCf>;
+  const comparator = (a: number, b: number) => a - b;
+
   let scheduler: TestScheduler;
 
   beforeEach(() => {
@@ -14,48 +18,41 @@ describe("operators/feedSortedList", () => {
 
   it("update existing", () => {
     scheduler.run(({ expectObservable }) => {
-      const input: ChangeFeed$<any> = scheduler.createColdObservable(
-        "a-b-c-|",
-        {
-          a: ["set", "1", 100],
-          b: ["set", "2", 101],
-          c: ["set", "1", 102]
-        }
-      );
-
-      const comparator: Comparator$<number> = of(
-        (a: number, b: number) => a - b
-      );
+      const input: TestCf$ = scheduler.createColdObservable("a-b-c-|", {
+        a: ["set", "x", 100],
+        b: ["set", "y", 101],
+        c: ["set", "x", 102]
+      });
 
       const output = input.pipe(
         feedSortedList(comparator, { throttleTime: 0, scheduler }),
-        map(subjects => subjects.map(subject => subject.value))
+        map(list => list.map(value$ => value$.key))
       );
 
       expectObservable(output).toBe("a-b-c-|", {
-        a: [100],
-        b: [100, 101],
-        c: [101, 102]
+        a: ["x"],
+        b: ["x", "y"],
+        c: ["y", "x"]
       });
     });
   });
 
   it("value change that does not effect sorting does not trigger event", () => {
     scheduler.run(({ expectObservable }) => {
-      const input: ChangeFeed$<any> = scheduler.createColdObservable("abc|", {
-        a: ["set", "1", 100],
-        b: ["set", "2", 110],
-        c: ["set", "1", 101]
+      const input: TestCf$ = scheduler.createColdObservable("abc|", {
+        a: ["set", "x", 100],
+        b: ["set", "y", 110],
+        c: ["set", "x", 101]
       });
 
       const output = input.pipe(
-        feedSortedList((a, b) => a - b, { throttleTime: 0, scheduler }),
-        map(subjects => subjects.map(subject => subject.value))
+        feedSortedList(comparator, { throttleTime: 0, scheduler }),
+        map(list => list.map(value$ => value$.key))
       );
 
       expectObservable(output).toBe("ab-|", {
-        a: [100],
-        b: [100, 110]
+        a: ["x"],
+        b: ["x", "y"]
       });
     });
   });
@@ -65,21 +62,21 @@ describe("operators/feedSortedList", () => {
       const input: ChangeFeed$<any> = scheduler.createColdObservable(
         "a-b-c-|",
         {
-          a: ["set", "1", 100],
-          b: ["set", "2", 101],
-          c: ["del", "1"]
+          a: ["set", "x", 100],
+          b: ["set", "y", 101],
+          c: ["del", "x"]
         }
       );
 
       const output = input.pipe(
-        feedSortedList((a, b) => a - b, { throttleTime: 0 }),
-        map(subjects => subjects.map(subject => subject.value))
+        feedSortedList((a, b) => a - b, { throttleTime: 0, scheduler }),
+        map(list => list.map(value$ => value$.key))
       );
 
       expectObservable(output).toBe("a-b-c-|", {
-        a: [100],
-        b: [100, 101],
-        c: [101]
+        a: ["x"],
+        b: ["x", "y"],
+        c: ["y"]
       });
     });
   });
@@ -87,29 +84,20 @@ describe("operators/feedSortedList", () => {
   it("BehaviorSubject is updated with new values and completed on deletion", () => {
     scheduler.run(({ hot, expectObservable }) => {
       const input: ChangeFeed$<any> = hot("a-b-c-|", {
-        a: ["set", "1", 100],
-        b: ["set", "1", 101],
-        c: ["del", "1"]
+        a: ["set", "x", 100],
+        b: ["set", "x", 101],
+        c: ["del", "x"]
       });
 
-      const sortedList$ = input.pipe(
-        feedSortedList((a, b) => a - b, { throttleTime: 0 })
+      const value$ = input.pipe(
+        feedSortedList((a, b) => a - b, { throttleTime: 0, scheduler }),
+        switchMap(list => (list[0] ? concat(list[0], of("complete")) : of()))
       );
 
-      let one$ = new Subject();
-      let oneSub: Unsubscribable;
-
-      sortedList$.subscribe({
-        next(sortedList) {
-          if (!oneSub) {
-            oneSub = sortedList[0].subscribe(one$);
-          }
-        }
-      });
-
-      expectObservable(one$).toBe("a-b-|", {
+      expectObservable(value$).toBe("a-b-c-|", {
         a: 100,
-        b: 101
+        b: 101,
+        c: "complete"
       });
     });
   });

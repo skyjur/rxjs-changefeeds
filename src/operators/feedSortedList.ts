@@ -1,5 +1,4 @@
 import {
-  interval,
   OperatorFunction,
   Observable,
   Subject,
@@ -8,7 +7,6 @@ import {
   asyncScheduler,
   Unsubscribable
 } from "rxjs";
-import { filter, map, scan, throttle, tap } from "rxjs/operators";
 import { ChangeFeed, ChangeFeed$ } from "../types";
 import { changeFeedHandler } from "../utils";
 
@@ -16,17 +14,42 @@ export type Comparator<T> = (a: T, b: T) => number;
 export type Comparator$<T> = Observable<Comparator<T>>;
 
 interface Options {
-  throttleTime?: number;
+  throttleTime?: number | null;
   scheduler?: SchedulerLike;
+}
+
+type Input<Key, Value> = ChangeFeed<Value, Key>;
+type Output<Key, Value> = Array<ValueObservable<Key, Value>>;
+type OperatorType<Key, Value> = OperatorFunction<
+  Input<Key, Value>,
+  Output<Key, Value>
+>;
+
+export class ValueObservable<Key, Value> extends Observable<Value> {
+  constructor(public key: Key, subject: Subject<Value>) {
+    super(subscriber => {
+      const sub = subject.subscribe(subscriber);
+      return () => {
+        sub.unsubscribe();
+      };
+    });
+  }
 }
 
 export function feedSortedList<Value, Key = any>(
   comparator: Comparator<Value> | Comparator$<Value>,
   { throttleTime = 100, scheduler = asyncScheduler }: Options = {}
-): OperatorFunction<ChangeFeed<Value, Key>, Array<BehaviorSubject<Value>>> {
+): OperatorType<Key, Value> {
   return (input: ChangeFeed$<Value>) => {
     return new Observable(subscriber => {
-      const data = new Map<Key, BehaviorSubject<Value>>();
+      type DataValue = {
+        value: Value;
+        subject: Subject<Value>;
+        observable: ValueObservable<Key, Value>;
+      };
+
+      const data = new Map<Key, DataValue>();
+
       let cmp: Comparator<Value> | null =
         typeof comparator === "function" ? comparator : null;
       let keySortIndex = new Map<Key, number>();
@@ -35,18 +58,22 @@ export function feedSortedList<Value, Key = any>(
       let pendingFlush: Unsubscribable | null = null;
 
       const flush = () => {
+        pendingFlush = null;
         const keys = Array.from(data.keys());
         sortedKeys = keys.sort((key1, key2) =>
           cmp!(data.get(key1)!.value, data.get(key2)!.value)
         );
         keySortIndex = new Map(sortedKeys.map((key, index) => [key, index]));
-        subscriber.next(sortedKeys.map(key => data.get(key)!));
-        pendingFlush = null;
+        subscriber.next(sortedKeys.map(key => data.get(key)!.observable));
       };
 
       const scheduleFlush = () => {
         if (!pendingFlush) {
-          pendingFlush = scheduler.schedule(flush, throttleTime);
+          if (throttleTime === null) {
+            flush();
+          } else {
+            pendingFlush = scheduler.schedule(flush, throttleTime);
+          }
         }
       };
 
@@ -54,7 +81,7 @@ export function feedSortedList<Value, Key = any>(
         typeof comparator !== "function" &&
         comparator.subscribe({
           next(newCmp) {
-            if (newCmp && newCmp !== cmp) {
+            if (newCmp !== cmp) {
               cmp = newCmp;
               scheduleFlush();
             }
@@ -65,7 +92,7 @@ export function feedSortedList<Value, Key = any>(
         next: changeFeedHandler({
           set(key, newValue) {
             if (data.has(key)) {
-              data.get(key)!.next(newValue);
+              data.get(key)!.subject.next(newValue);
               if (cmp && !pendingFlush) {
                 const i = keySortIndex.get(key)!;
                 if (i > 0) {
@@ -82,13 +109,15 @@ export function feedSortedList<Value, Key = any>(
                 }
               }
             } else {
-              data.set(key, new BehaviorSubject(newValue));
+              const subject = new BehaviorSubject(newValue);
+              const observable = new ValueObservable(key, subject);
+              data.set(key, { value: newValue, subject, observable });
               scheduleFlush();
             }
           },
           del(key) {
             if (data.has(key)) {
-              data.get(key)!.complete();
+              data.get(key)!.subject.complete();
               data.delete(key);
               scheduleFlush();
             }
@@ -99,7 +128,7 @@ export function feedSortedList<Value, Key = any>(
         },
         complete() {
           subscriber.complete();
-          for (const subject of data.values()) {
+          for (const { subject } of data.values()) {
             subject.complete();
           }
         }
@@ -111,7 +140,7 @@ export function feedSortedList<Value, Key = any>(
         if (pendingFlush) {
           pendingFlush.unsubscribe();
         }
-        for (const subject of data.values()) {
+        for (const { subject } of data.values()) {
           subject.complete();
         }
       };
