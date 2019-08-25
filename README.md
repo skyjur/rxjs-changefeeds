@@ -101,34 +101,54 @@ When there are no more items left in a group, group's observable completes.
 
 ```js
 import { Subject } from "rxjs";
-import { mergeMap, map, do } from "rxjs/operators";
+import { mergeMap, map, tap } from "rxjs/operators";
 import { feedGroupBy } from "rxjs-changefeeds";
 
 const input = new Subject();
 
 const result = input.pipe(feedGroupBy(num => (num % 2 ? "odd" : "even")));
 
-result.pipe(
-  do(groups => console.log("keys:", ...groups.keys())),
- mergeMap(groups => [...groups.entries()]),
- 
-)
+result.subscribe({
+  next(record) {
+    const [op, groupKey, groupChanges$] = record;
+    console.log("root:", op, groupKey);
+    if (groupChanges$) {
+      groupChanges$.subscribe({
+        next(record) {
+          console.log(groupKey + ":", record);
+        },
+        complete() {
+          console.log(groupKey + ":", "complete.");
+        }
+      });
+    }
+  },
+  complete() {
+    console.log("root: complete.");
+  }
+});
 
 input.next(["set", "x", 1]);
 // output:
-// keys: odd
+// root: set odd
 // odd: ["set","x",1]
 
 input.next(["set", "y", 2]);
 // output:
-// keys: odd even
+// root: set even
 // even: ["set","y",2]
 
 input.next(["set", "x", 2]);
 // output:
 // odd: ["del","x"]
+// odd: complete.
+// root: del odd
 // even: ["set","x",2]
-// keys: even
+
+input.complete();
+// output:
+// root: complete.
+// even: complete.
 ```
 
 ## operators/feedCombine

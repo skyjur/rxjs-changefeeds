@@ -25,7 +25,7 @@ export const Index = ({ html }: Context, props: IndexProps) => {
       <h2 class="title is-4 is-spaced">
         Input feed
         <a
-          href="https://github.com/skyjur/rx-js-changefeeds/blob/master/example/moving-dots/index.ts#L22"
+          href="https://github.com/skyjur/rxjs-changefeeds/blob/master/example/moving-dots/index.ts#L22"
           ><small class="is-size-7">code</small></a
         >
       </h2>
@@ -43,7 +43,7 @@ export const Index = ({ html }: Context, props: IndexProps) => {
       <h2 class="title is-4 is-spaced">
         Filtering
         <a
-          href="https://github.com/skyjur/rx-js-changefeeds/blob/master/example/moving-dots/index.ts#L47"
+          href="https://github.com/skyjur/rxjs-changefeeds/blob/master/example/moving-dots/index.ts#L47"
           ><small class="is-size-7">code</small></a
         >
       </h2>
@@ -79,7 +79,7 @@ export const Index = ({ html }: Context, props: IndexProps) => {
       <h2 class="title is-4 is-spaced">
         Group by
         <a
-          href="https://github.com/skyjur/rx-js-changefeeds/blob/master/example/moving-dots/index.ts#L32"
+          href="https://github.com/skyjur/rxjs-changefeeds/blob/master/example/moving-dots/index.ts#L32"
           ><small class="is-size-7">code</small></a
         >
       </h2>
@@ -111,7 +111,7 @@ export const Index = ({ html }: Context, props: IndexProps) => {
       <h2 class="title is-4 is-spaced">
         Sorted list
         <a
-          href="https://github.com/skyjur/rx-js-changefeeds/blob/master/example/moving-dots/index.ts#L38"
+          href="https://github.com/skyjur/rxjs-changefeeds/blob/master/example/moving-dots/index.ts#L38"
           ><small class="is-size-7">code</small></a
         >
       </h2>

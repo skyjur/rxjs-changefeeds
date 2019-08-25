@@ -30,13 +30,13 @@ describe("operators/feedGroupBy", () => {
       });
 
       const output$ = input$.pipe(
-        feedGroupBy<number, number>(n => n % 2),
-        map(groups => Array.from(groups.keys()).sort())
+        feedGroupBy<"odd" | "even", number>(n => (n % 2 > 0 ? "odd" : "even")),
+        map(([op, groupKey]) => [op, groupKey])
       );
 
       expectObservable(output$).toBe("ab-|", {
-        a: [1],
-        b: [0, 1]
+        a: ["set", "odd"],
+        b: ["set", "even"]
       });
     });
   });
@@ -51,13 +51,13 @@ describe("operators/feedGroupBy", () => {
 
       const output$ = input$.pipe(
         feedGroupBy<string, number>(oddEven),
-        map(groups => Array.from(groups.keys()).sort())
+        map(([op, groupKey]) => [op, groupKey])
       );
 
       expectObservable(output$).toBe("abc|", {
-        a: ["odd"],
-        b: ["even", "odd"],
-        c: ["even"]
+        a: ["set", "odd"],
+        b: ["set", "even"],
+        c: ["del", "odd"]
       });
     });
   });
@@ -71,13 +71,13 @@ describe("operators/feedGroupBy", () => {
 
       const output$ = input$.pipe(
         feedGroupBy<string, number>(oddEven),
-        map(groups => Array.from(groups.keys()).sort())
+        map((op, key) => [op, key])
       );
 
       expectObservable(output$).toBe("a-(bc)", {
-        a: ["odd"],
-        b: [],
-        c: ["even"]
+        a: ["set", "odd"],
+        b: ["del", "odd"],
+        c: ["set", "even"]
       });
     });
   });
@@ -94,9 +94,9 @@ describe("operators/feedGroupBy", () => {
       let oddSub: Unsubscribable;
 
       input$.pipe(feedGroupBy<string, number>(oddEven)).subscribe({
-        next(groups) {
-          if (!oddSub) {
-            oddSub = groups.get("odd")!.subscribe(odd$);
+        next([op, groupKey, group$]) {
+          if (op === "set" && groupKey === "odd") {
+            oddSub = group$!.subscribe(odd$);
           }
         }
       });
