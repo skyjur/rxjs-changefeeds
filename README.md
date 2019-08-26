@@ -201,7 +201,7 @@ Transform changefeed into sorted array where each item in the array is an Observ
   - `Observable<Comparator>`
 - _Input_: `ChangeFeed<Key¸ Value>`
 - _Output_: `Array<Observable<Value> & {key: Key}>`
-- _Options_: optional options:
+- _Options_: optional object of parameters:
   - `throttleTime`: default `100`. Throttles _Output_ and re-sorting. Use `null` to disable throttling and trigger update synchronously.
   - `scheduler`: default `asyncScheduler`, not used when `throttleTime: null`
 
