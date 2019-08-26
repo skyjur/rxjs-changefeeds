@@ -34,7 +34,7 @@ const citySample = [
   "San Francisco"
 ];
 
-export class UserFeedGenerator extends FeedGenerator<string, User> {
+export class UserFeedGenerator extends FeedGenerator<User> {
   public citiesRatio = 0.1;
 
   public create(): User {
