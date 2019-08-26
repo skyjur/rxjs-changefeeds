@@ -27,10 +27,10 @@ jobs:
           command: npm run build:dist
       - run:
           name: Run tests
-          command: npm test:dist
+          command: npm run test:dist
       - run:
           name: Run readme tests
-          command: npm test:readme
+          command: npm run test:readme
 
       - save_cache:
           paths:
