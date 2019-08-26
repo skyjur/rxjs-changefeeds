@@ -3,7 +3,7 @@ import { changeFeedHandler } from "../utils";
 import { ChangeFeed } from "../types";
 
 export const feedToKeyValueMap = <K, V>(): OperatorFunction<
-  ChangeFeed<V, K>,
+  ChangeFeed<K, V>,
   Map<K, V>
 > => source =>
   new Observable(subscriber => {

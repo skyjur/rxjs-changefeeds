@@ -1,16 +1,16 @@
 import { ChangeFeed } from "./types";
 
-export interface ChangeFeedHandler<Value, Key> {
+export interface ChangeFeedHandler<Key, Value> {
   initializing(): void;
   ready(): void;
   set(key: Key, value: Value): void;
   del(key: Key): void;
 }
 
-export function changeFeedHandler<Value, Key>(
-  handler: Partial<ChangeFeedHandler<Value, Key>>
-): (record: ChangeFeed<Value, Key>) => void {
-  return (record: ChangeFeed<Value>) => {
+export function changeFeedHandler<Key, Value>(
+  handler: Partial<ChangeFeedHandler<Key, Value>>
+): (record: ChangeFeed<Key, Value>) => void {
+  return (record: ChangeFeed<Key, Value>) => {
     switch (record[0]) {
       case "initializing":
         handler.initializing && handler.initializing();

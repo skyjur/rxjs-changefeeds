@@ -1,9 +1,11 @@
 import { Observable } from "rxjs";
 
-export type ChangeFeed<Value = any, Key = any> =
+export type ChangeFeed<Key = any, Value = any> =
   | ["initializing"]
   | ["ready"]
   | ["set", Key, Value]
   | ["del", Key];
 
-export type ChangeFeed$<Value, Key = any> = Observable<ChangeFeed<Value, Key>>;
+export type ChangeFeed$<Key = any, Value = any> = Observable<
+  ChangeFeed<Key, Value>
+>;

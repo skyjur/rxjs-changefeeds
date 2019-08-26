@@ -18,7 +18,7 @@ interface Options {
   scheduler?: SchedulerLike;
 }
 
-type Input<Key, Value> = ChangeFeed<Value, Key>;
+type Input<Key, Value> = ChangeFeed<Key, Value>;
 type Output<Key, Value> = Array<Observable<Value> & { key: Key }>;
 type ReturnType<Key, Value> = OperatorFunction<
   Input<Key, Value>,
@@ -36,11 +36,11 @@ export class ValueObservable<Key, Value> extends Observable<Value> {
   }
 }
 
-export const feedSortedList = <Value, Key = any>(
+export const feedSortedList = <Key = any, Value = any>(
   comparator: Comparator<Value> | Comparator$<Value>,
   { throttleTime = 100, scheduler = asyncScheduler }: Options = {}
 ): ReturnType<Key, Value> => {
-  return (input: ChangeFeed$<Value>) => {
+  return (input: ChangeFeed$<Key, Value>) => {
     return new Observable(subscriber => {
       type DataValue = {
         value: Value;

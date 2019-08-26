@@ -1,8 +1,9 @@
-import { of } from "rxjs";
+import { of, Observable } from "rxjs";
 import { map, mergeMap, take } from "rxjs/operators";
 import { TestScheduler } from "rxjs/testing";
-import { ChangeFeed$ } from "../types";
+import { ChangeFeed$, ChangeFeed } from "../types";
 import { feedToObservablesMap } from "./feedToObservablesMap";
+import { number$ } from "../_internal/types";
 
 const { deepStrictEqual } = require("assert");
 
@@ -14,17 +15,17 @@ describe("changefeed.operators.feedToMap", () => {
   });
 
   describe("sortedIds()", () => {
+    type TestCf = ChangeFeed<string, number>;
+    type TestCf$ = Observable<TestCf>;
+
     it("value update", () => {
       scheduler.run(({ expectObservable }) => {
-        const input: ChangeFeed$<number> = scheduler.createColdObservable(
-          "a-b|",
-          {
-            a: ["set", "1", 101],
-            b: ["set", "1", 102]
-          }
-        );
+        const input: TestCf$ = scheduler.createColdObservable("a-b|", {
+          a: ["set", "1", 101],
+          b: ["set", "1", 102]
+        });
 
-        const output = input.pipe(feedToObservablesMap<number>());
+        const output = input.pipe(feedToObservablesMap());
 
         const values = output.pipe(mergeMap(data => data.get("1")!));
 
@@ -37,17 +38,16 @@ describe("changefeed.operators.feedToMap", () => {
 
     it("deleting key completes observable", () => {
       scheduler.run(({ expectObservable }) => {
-        const input: ChangeFeed$<number> = scheduler.createColdObservable(
-          "ab|",
-          {
-            a: ["set", "1", 101],
-            b: ["del", "1"]
-          }
+        const input: TestCf$ = scheduler.createColdObservable("ab|", {
+          a: ["set", "1", 101],
+          b: ["del", "1"]
+        });
+
+        const output = input.pipe(feedToObservablesMap());
+
+        const values = output.pipe(
+          mergeMap(data => data.get("1")! || of<number>())
         );
-
-        const output = input.pipe(feedToObservablesMap<number>());
-
-        const values = output.pipe(mergeMap(data => data.get("1") || of()!));
 
         expectObservable(values).toBe("a-|", {
           a: 101
@@ -57,15 +57,12 @@ describe("changefeed.operators.feedToMap", () => {
 
     it("keys added", () => {
       scheduler.run(({ expectObservable }) => {
-        const input: ChangeFeed$<number> = scheduler.createColdObservable(
-          "a-b-|",
-          {
-            a: ["set", "1", 101],
-            b: ["set", "2", 102]
-          }
-        );
+        const input: TestCf$ = scheduler.createColdObservable("a-b-|", {
+          a: ["set", "1", 101],
+          b: ["set", "2", 102]
+        });
 
-        const output = input.pipe(feedToObservablesMap<number>());
+        const output = input.pipe(feedToObservablesMap());
 
         const keys = output.pipe(map(data => Array.from(data.keys())));
 
@@ -78,15 +75,12 @@ describe("changefeed.operators.feedToMap", () => {
 
     it("keys deleted", () => {
       scheduler.run(({ expectObservable }) => {
-        const input: ChangeFeed$<number> = scheduler.createColdObservable(
-          "ab",
-          {
-            a: ["set", "1", 101],
-            b: ["del", "1"]
-          }
-        );
+        const input: TestCf$ = scheduler.createColdObservable("ab", {
+          a: ["set", "1", 101],
+          b: ["del", "1"]
+        });
 
-        const output = input.pipe(feedToObservablesMap<number>());
+        const output = input.pipe(feedToObservablesMap());
 
         const keys = output.pipe(map(data => Array.from(data.keys())));
 
@@ -99,15 +93,12 @@ describe("changefeed.operators.feedToMap", () => {
 
     it("when no keys added/removed not event triggered", () => {
       scheduler.run(({ expectObservable }) => {
-        const input: ChangeFeed$<number> = scheduler.createColdObservable(
-          "ab",
-          {
-            a: ["set", "1", 101],
-            b: ["set", "1", 103]
-          }
-        );
+        const input: TestCf$ = scheduler.createColdObservable("ab", {
+          a: ["set", "1", 101],
+          b: ["set", "1", 103]
+        });
 
-        const output = input.pipe(feedToObservablesMap<number>());
+        const output = input.pipe(feedToObservablesMap());
 
         const keys = output.pipe(map(data => Array.from(data.keys())));
 

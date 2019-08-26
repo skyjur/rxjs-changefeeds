@@ -1,5 +1,5 @@
 import { ChangeFeed$ } from "../../../../src/types";
-import { Point } from "../../data/feedGenerator";
+import { Point, PointCf$ } from "../../data/feedGenerator";
 import { Context } from "../Context";
 import { directive, NodePart } from "lit-html";
 import { Unsubscribable } from "rxjs";
@@ -9,13 +9,13 @@ const size = 200;
 
 interface State {
   canvas?: HTMLCanvasElement;
-  pointsCf$?: ChangeFeed$<Point>;
+  pointsCf$?: PointCf$;
   interval?: any;
   sub?: Unsubscribable;
 }
 
 export const PointsChartCanvas = directive(
-  ({ window, document }: Context, pointsCf$: ChangeFeed$<Point>) => (
+  ({ window, document }: Context, pointsCf$: PointCf$) => (
     part: NodePart & { _state?: State }
   ) => {
     const state = (part._state = part._state || {});

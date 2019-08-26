@@ -4,9 +4,9 @@ import { ChangeFeed } from "../types";
 
 type Result<V> = { [key: string]: V };
 
-export const feedToKeyValueMap = <V>(): OperatorFunction<
-  ChangeFeed<V, string | number>,
-  Result<V>
+export const feedToKeyValueObject = <Value>(): OperatorFunction<
+  ChangeFeed<string | number, Value>,
+  Result<Value>
 > => source =>
   new Observable(subscriber => {
     const data: any = {};

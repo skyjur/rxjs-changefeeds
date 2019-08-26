@@ -1,17 +1,14 @@
 import { changeFeedHandler } from "../../../../src/utils";
 import { Context } from "../Context";
 import { ChangeFeed$ } from "../../../../src/types";
-import { Point } from "../../data/feedGenerator";
+import { Point, PointCf$ } from "../../data/feedGenerator";
 
 const svgns: "http://www.w3.org/2000/svg" = "http://www.w3.org/2000/svg";
 const xmlns: "http://www.w3.org/2000/xmlns/" = "http://www.w3.org/2000/xmlns/";
 
 const size = 200;
 
-export const PointsChartSvg = (
-  { document }: Context,
-  pointsCf$: ChangeFeed$<Point>
-) => {
+export const PointsChartSvg = ({ document }: Context, pointsCf$: PointCf$) => {
   const svg = document.createElementNS(svgns, "svg");
   svg.setAttributeNS(xmlns, "xmlns:xlink", "http://www.w3.org/1999/xlink");
   svg.setAttribute("viewBox", `-1.5 -1.5 3 3`);
@@ -21,7 +18,7 @@ export const PointsChartSvg = (
   const elements = new Map<any, SVGCircleElement>();
 
   pointsCf$.subscribe({
-    next: changeFeedHandler<Point, string>({
+    next: changeFeedHandler<string, Point>({
       set(key, value) {
         const circle =
           elements.get(key) || document.createElementNS(svgns, "circle");

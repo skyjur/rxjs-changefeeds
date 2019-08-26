@@ -2,21 +2,19 @@ import {
   BehaviorSubject,
   Observable,
   OperatorFunction,
-  Subject,
   Subscriber
 } from "rxjs";
-import { debounceTime, filter, map, scan } from "rxjs/operators";
 import { ChangeFeed, ChangeFeed$ } from "../types";
 
-type Output<T> = Map<string, BehaviorSubject<T>>;
+type Output<Key, Value> = Map<Key, BehaviorSubject<Value>>;
 
-export function feedToObservablesMap<Value>(): OperatorFunction<
-  ChangeFeed<Value>,
-  Output<Value>
+export function feedToObservablesMap<Key, Value>(): OperatorFunction<
+  ChangeFeed<Key, Value>,
+  Output<Key, Value>
 > {
-  return (input: ChangeFeed$<Value>) => {
-    return new Observable<Output<Value>>(subscriber => {
-      const acc = new FeedToMapAccumulator(subscriber);
+  return (input: ChangeFeed$<Key, Value>) => {
+    return new Observable<Output<Key, Value>>(subscriber => {
+      const acc = new FeedToMapAccumulator<Key, Value>(subscriber);
       const sub = input.subscribe({
         next(record) {
           acc.next(record);
@@ -36,13 +34,13 @@ export function feedToObservablesMap<Value>(): OperatorFunction<
   };
 }
 
-class FeedToMapAccumulator<Value> {
+class FeedToMapAccumulator<Key, Value> {
   public keysHasChanged: boolean = false;
-  public data: Map<string, BehaviorSubject<Value>> = new Map();
+  public data: Map<Key, BehaviorSubject<Value>> = new Map();
 
-  constructor(private output: Subscriber<Output<Value>>) {}
+  constructor(private output: Subscriber<Output<Key, Value>>) {}
 
-  public next(val: ChangeFeed<Value>) {
+  public next(val: ChangeFeed<Key, Value>) {
     switch (val[0]) {
       case "initializing":
         this.data.clear();
@@ -65,7 +63,7 @@ class FeedToMapAccumulator<Value> {
     }
   }
 
-  private set(key: string, obj: Value) {
+  private set(key: Key, obj: Value) {
     if (this.data.has(key)) {
       this.data.get(key)!.next(obj);
     } else {
@@ -74,7 +72,7 @@ class FeedToMapAccumulator<Value> {
     }
   }
 
-  private del(key: string) {
+  private del(key: Key) {
     if (this.data.has(key)) {
       this.data.get(key)!.complete();
       this.data.delete(key);

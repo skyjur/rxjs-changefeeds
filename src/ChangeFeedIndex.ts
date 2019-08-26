@@ -12,8 +12,8 @@ import { changeFeedHandler } from "./utils";
 /**
  * Index last value in changefeed by key into BehaviorSubject
  */
-export class ChangeFeedIndex<Value, Key = any>
-  implements Partial<Observer<ChangeFeed<Value>>>, SubscriptionLike {
+export class ChangeFeedIndex<Key = any, Value = any>
+  implements Partial<Observer<ChangeFeed<Key, Value>>>, SubscriptionLike {
   private state: Map<Key, Value> = new Map();
   private subscribers = new Map<Key, Subscriber<Value | null>[]>();
   public closed = false;

@@ -1,4 +1,4 @@
-import { Subject, Subscriber, ReplaySubject } from "rxjs";
+import { Subject, Subscriber } from "rxjs";
 import { ChangeFeed } from "./types";
 import { ChangeFeedHandler, changeFeedHandler } from "./utils";
 
@@ -8,17 +8,17 @@ import { ChangeFeedHandler, changeFeedHandler } from "./utils";
  * Following ReplySubject paradigm of rxjs
  *
  */
-export class ChangeFeedReplaySubject<Value, Key> extends Subject<
-  ChangeFeed<Value, Key>
+export class ChangeFeedReplaySubject<Key, Value> extends Subject<
+  ChangeFeed<Key, Value>
 > {
-  private state = new ChangeFeedRecorder<Value, Key>();
+  private state = new ChangeFeedRecorder<Key, Value>();
 
-  public next(record: ChangeFeed<Value, Key>) {
+  public next(record: ChangeFeed<Key, Value>) {
     this.state.next(record);
     super.next(record);
   }
 
-  public _subscribe(subscriber: Subscriber<ChangeFeed<Value>>) {
+  public _subscribe(subscriber: Subscriber<ChangeFeed<Key, Value>>) {
     // tslint:disable-next-line:deprecation
     const subscription = super._subscribe(subscriber);
     this.state.replay(subscriber);
@@ -26,14 +26,14 @@ export class ChangeFeedReplaySubject<Value, Key> extends Subject<
   }
 }
 
-class ChangeFeedRecorder<Value, Key> implements ChangeFeedHandler<Value, Key> {
+class ChangeFeedRecorder<Key, Value> implements ChangeFeedHandler<Key, Value> {
   private initializingStarted = false;
   private data = new Map<Key, Value>();
   private isReady = false;
 
   next = changeFeedHandler(this);
 
-  replay(subscriber: Subscriber<ChangeFeed<Value>>) {
+  replay(subscriber: Subscriber<ChangeFeed<Key, Value>>) {
     if (this.initializingStarted) {
       subscriber.next(["initializing"]);
     }

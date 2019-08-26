@@ -8,7 +8,6 @@ import {
   allShades,
   Shade,
   pointShadeFilter,
-  getShade,
   getPointShade
 } from "./data/shade";
 import {
@@ -25,10 +24,11 @@ import {
   Comparator$
 } from "../../src/operators/feedSortedList";
 import { Filtering } from "./html/sections/filtering";
-import { feedFilterRx } from "../../src/operators/feedFilterRx";
+import { feedFilter } from "../../src/operators/feedFilter";
 import { feedGroupBy } from "../../src/operators/feedGroupBy";
 import { SortBy, pointCmp, SortField, SortDir } from "./data/sorting";
 import { Array$ } from "../../src/_internal/types";
+import { feedToKeyValueMap } from "../../src";
 
 /**
  * INPUT CONFIG
@@ -50,20 +50,21 @@ const pointsCf$ = PointsChangeFeed(numOfPoints$, updateInterval$).pipe(share());
 const selectedShades$ = new BehaviorSubject<Shade[]>(allShades);
 const selectedQuarters$ = new BehaviorSubject<Quarter[]>(allQuarters);
 const filteredPoints$ = pointsCf$.pipe(
-  feedFilterRx(selectedShades$.pipe(map(pointShadeFilter))),
-  feedFilterRx(selectedQuarters$.pipe(map(quarterFilter)))
+  feedFilter(selectedShades$.pipe(map(pointShadeFilter))),
+  feedFilter(selectedQuarters$.pipe(map(quarterFilter)))
 );
 
 // only display available shades
 const shadeChoices$: Array$<Shade> = pointsCf$.pipe(
-  feedGroupBy<Shade, Point>(getPointShade),
+  feedGroupBy(getPointShade),
+  feedToKeyValueMap(),
   map(groups => Array.from(groups.keys()).sort())
 );
 
 /**
  * GROUPING SECTION STATE
  */
-const groupedPoints$ = pointsCf$.pipe(feedGroupBy<Quarter, Point>(getQuarter));
+const groupedPoints$ = pointsCf$.pipe(feedGroupBy(getQuarter));
 
 /**
  * SORTING SECTION

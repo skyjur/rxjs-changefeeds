@@ -3,26 +3,23 @@ import { ChangeFeed, ChangeFeed$ } from "../types";
 import { changeFeedHandler } from "../utils";
 import { ChangeFeedReplaySubject } from "../ChangeFeedReplay";
 
-type GroupedChangeFeed<GroupKey, Value, ValueKey> = ChangeFeed<
-  ChangeFeed$<Value, ValueKey>,
-  GroupKey
+type GroupedChangeFeed<GroupKey, Key, Value> = ChangeFeed<
+  GroupKey,
+  ChangeFeed$<Key, Value>
 >;
 
-export const feedGroupBy = <GroupKey, Value, ValueKey = any>(
+export const feedGroupBy = <GroupKey, Key, Value>(
   keySelector: (obj: Value) => GroupKey
 ): OperatorFunction<
-  ChangeFeed<Value>,
-  GroupedChangeFeed<GroupKey, Value, ValueKey>
+  ChangeFeed<Key, Value>,
+  GroupedChangeFeed<GroupKey, Key, Value>
 > => {
-  return (input: ChangeFeed$<Value, ValueKey>) => {
-    return new Observable<GroupedChangeFeed<GroupKey, Value, ValueKey>>(
+  return (input: ChangeFeed$<Key, Value>) => {
+    return new Observable<GroupedChangeFeed<GroupKey, Key, Value>>(
       subscriber => {
-        const groups = new Map<
-          GroupKey,
-          ChangeFeedReplaySubject<Value, ValueKey>
-        >();
-        const recordToGroupMap = new Map<ValueKey, GroupKey>();
-        const groupContent = new Map<GroupKey, Set<ValueKey>>();
+        const groups = new Map<GroupKey, ChangeFeedReplaySubject<Key, Value>>();
+        const recordToGroupMap = new Map<Key, GroupKey>();
+        const groupContent = new Map<GroupKey, Set<Key>>();
         let ready = false;
         let initializing = false;
 
@@ -40,7 +37,7 @@ export const feedGroupBy = <GroupKey, Value, ValueKey = any>(
                 group.next(["ready"]);
               }
             },
-            set(key: ValueKey, value: Value) {
+            set(key: Key, value: Value) {
               const groupKey = keySelector(value);
 
               if (
@@ -53,7 +50,7 @@ export const feedGroupBy = <GroupKey, Value, ValueKey = any>(
               recordToGroupMap.set(key, groupKey);
 
               if (!groups.has(groupKey)) {
-                const newGroup = new ChangeFeedReplaySubject<Value, ValueKey>();
+                const newGroup = new ChangeFeedReplaySubject<Key, Value>();
                 groups.set(groupKey, newGroup);
                 groupContent.set(groupKey, new Set());
                 subscriber.next(["set", groupKey, newGroup]);
@@ -64,7 +61,7 @@ export const feedGroupBy = <GroupKey, Value, ValueKey = any>(
               groupContent.get(groupKey)!.add(key);
               groups.get(groupKey)!.next(["set", key, value]);
             },
-            del(key: ValueKey) {
+            del(key: Key) {
               if (recordToGroupMap.has(key)) {
                 const groupKey = recordToGroupMap.get(key)!;
                 if (groups.has(groupKey)) {

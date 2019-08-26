@@ -6,6 +6,8 @@ import { repeat } from "lit-html/directives/repeat";
 import { PointsChartCanvas } from "../feedOutput/pointsCanvas";
 import { Observable, of } from "rxjs";
 import { RawChangeFeed } from "../feedOutput/rawChangeFeed";
+import { ChangeFeed } from "../../../../src/types";
+import { feedToKeyValueMap } from "../../../../src";
 
 export const quarterLabels = {
   [Quarter.first]: "1st",
@@ -21,7 +23,7 @@ export const quarterSubtitle = {
   [Quarter.fourth]: "x<0, y>0"
 };
 
-export type QuarterGroupedPointCf = Map<Quarter, PointCf$>;
+export type QuarterGroupedPointCf = ChangeFeed<Quarter, PointCf$>;
 export type QuarterGroupedPointCf$ = Observable<QuarterGroupedPointCf>;
 
 export const Grouping = (
@@ -30,7 +32,7 @@ export const Grouping = (
 ) =>
   html`
     ${rxReplace(
-      groupedPoints,
+      groupedPoints.pipe(feedToKeyValueMap<Quarter, PointCf$>()),
       groups =>
         html`
           <div class="columns quarter-charts-columns">

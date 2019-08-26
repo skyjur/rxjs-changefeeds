@@ -40,6 +40,7 @@
     "markdown-doctest": "file:../markdown-doctest",
     "mocha": "^6.1.4",
     "prettier": "^1.18.2",
+    "rethinkdb": "^2.3.3",
     "rx-lit-html": "git+https://github.com/skyjur/rx-lit-html.git",
     "rxjs": "^6.5.2",
     "sass": "^1.22.9",

@@ -6,7 +6,7 @@ import { map, switchMap } from "rxjs/operators";
 import { of, concat, Observable } from "rxjs";
 
 describe("operators/feedSortedList", () => {
-  type TestCf = ChangeFeed<number, "x" | "y">;
+  type TestCf = ChangeFeed<"x" | "y", number>;
   type TestCf$ = Observable<TestCf>;
   const comparator = (a: number, b: number) => a - b;
 

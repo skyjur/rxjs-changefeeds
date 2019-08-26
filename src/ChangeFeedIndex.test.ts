@@ -3,8 +3,11 @@ import { deepStrictEqual } from "assert";
 import { TestScheduler } from "rxjs/testing";
 import { ChangeFeedIndex } from "./ChangeFeedIndex";
 import { ChangeFeed } from "./types";
+import { Observable } from "rxjs";
 
 describe("ChangeFeedIndex", () => {
+  type TestCf = ChangeFeed<string, string>;
+  type TestCf$ = Observable<TestCf>;
   let scheduler: TestScheduler;
 
   beforeEach(() => {
@@ -32,9 +35,9 @@ describe("ChangeFeedIndex", () => {
   });
 
   it("not found after ready", async () => {
-    scheduler.run(({ flush, expectObservable }) => {
+    scheduler.run(({ expectObservable }) => {
       const index = new ChangeFeedIndex(scheduler);
-      const feed$ = scheduler.createColdObservable<ChangeFeed<string>>("a-b", {
+      const feed$ = scheduler.createColdObservable<TestCf>("a-b", {
         a: ["initializing"],
         b: ["ready"]
       });
@@ -46,10 +49,10 @@ describe("ChangeFeedIndex", () => {
   });
 
   it("set & delete sequence", () => {
-    scheduler.run(({ hot, cold, expectObservable }) => {
+    scheduler.run(({ hot, expectObservable }) => {
       const index = new ChangeFeedIndex(scheduler);
 
-      hot<ChangeFeed<string>>("-a-b", {
+      hot<TestCf>("-a-b", {
         a: ["set", "1", "One1"],
         b: ["del", "1"]
       }).subscribe(index);

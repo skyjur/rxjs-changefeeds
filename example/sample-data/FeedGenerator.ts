@@ -1,4 +1,5 @@
 import { ChangeFeed } from "../../src/types";
+import { ΔUser } from "./UserFeedGenerator";
 
 export interface IHasId {
   id: string;
@@ -9,7 +10,7 @@ export abstract class FeedGenerator<T extends IHasId> {
   public ready = false;
   public targetSize = 100;
   public data: T[] = [];
-  public next(): ChangeFeed<T> {
+  public next(): ΔUser {
     const { targetSize } = this;
     const { data } = this;
     if (!this.initializing && !this.ready) {

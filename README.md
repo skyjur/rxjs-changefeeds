@@ -1,13 +1,13 @@
 # rxjs-changefeed
 
-Rxjs helpers to build things on top of changefeeds.
+RxJS helpers to build things on top of changefeeds.
 
 Api docs: [bellow](#API)
 Example: [demo](https://skyjur.github.io/rxjs-changefeeds/example), [code](example/moving-dots/index.ts)
 
 ### What are changefeeds?
 
-Changefeed is a log of `set <key> <value>` and `del <key> <value>` operations. This allows to express a collection of objects as observable in efficient way.
+Changefeed is a log of `set <key> <value>` and `del <key> <value>` operations. This allows to represent a collection as observable in efficient way.
 
 Many modern databases come with built in support for changefeeds: [CouchDb](https://docs.couchdb.org/en/2.2.0/api/database/changes.html), [RethinkDB](https://rethinkdb.com/docs/changefeeds/javascript/), [MongoDB](https://www.mongodb.com/blog/post/an-introduction-to-change-streams).
 
@@ -74,11 +74,11 @@ Example, using static filter function:
 
 ```js
 import { Subject } from "rxjs";
-import { feedFilterRx } from "rxjs-changefeeds";
+import { feedFilter } from "rxjs-changefeeds";
 
 const filter = value => value < 2;
 const input = new Subject();
-const output = input.pipe(feedFilterRx(filter)).subscribe(console.log);
+const output = input.pipe(feedFilter(filter)).subscribe(console.log);
 
 input.next(["set", "x", 1]);
 // output: ["set","x",1]
@@ -94,12 +94,12 @@ Example with observable filter function. Notice how only necessary updates are b
 
 ```js
 import { BehaviorSubject, Subject } from "rxjs";
-import { feedFilterRx } from "rxjs-changefeeds";
+import { feedFilter } from "rxjs-changefeeds";
 
 const filter = new BehaviorSubject(value => value < 3);
 
 const input = new Subject();
-const result = input.pipe(feedFilterRx(filter));
+const result = input.pipe(feedFilter(filter));
 result.subscribe(console.log);
 
 input.next(["set", "one", 1]);
@@ -278,7 +278,10 @@ input.next(["del", "x"]);
 
 ### `feedToKeyValueMap()`
 
-Transform `ChangeFeed<Value, Key>` to `Map<Key, Value>`.
+Flatten change feed to `new Map()`
+
+- _Input_: `ChangeFeed<Key, Value>`
+- _Output_: `Map<Key, Value>`
 
 ```js
 import { Subject, queueScheduler, of, list } from "rxjs";
