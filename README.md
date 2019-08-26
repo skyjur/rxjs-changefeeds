@@ -373,7 +373,7 @@ Similar to [ReplaySubject](https://www.learnrxjs.io/subjects/replaysubject.html)
 
 If input item is deleted with `del`, then it's removed from `ChangeFeedReplaySubject` internal state and won't trigger any events in subsequent subscribers.
 
-```es6
+```js
 import { ChangeFeedReplaySubject } from "rxjs-changefeeds";
 
 const subject = new ChangeFeedReplaySubject();

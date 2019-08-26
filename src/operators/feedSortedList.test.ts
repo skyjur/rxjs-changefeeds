@@ -25,7 +25,7 @@ describe("operators/feedSortedList", () => {
       });
 
       const output = input.pipe(
-        feedSortedList(comparator, { throttleTime: 0, scheduler }),
+        feedSortedList(comparator, { throttleTime: null }),
         map(list => list.map(value$ => value$.key))
       );
 

@@ -92,6 +92,7 @@ export const feedSortedList = <Key = any, Value = any>(
         next: changeFeedHandler({
           set(key, newValue) {
             if (data.has(key)) {
+              data.get(key)!.value = newValue;
               data.get(key)!.subject.next(newValue);
               if (cmp && !pendingFlush) {
                 const i = keySortIndex.get(key)!;

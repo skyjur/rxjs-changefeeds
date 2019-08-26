@@ -77,7 +77,7 @@ describe("operators/feedGroupBy", () => {
 
       const output$ = input$.pipe(
         feedGroupBy(oddEven),
-        map((op, key) => [op, key])
+        map(record => [record[0], record[1]]) // remove value key
       );
 
       expectObservable(output$).toBe("a-(bc)", {

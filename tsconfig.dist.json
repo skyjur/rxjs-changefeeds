@@ -8,6 +8,5 @@
     "checkJs": false,
     "declaration": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["src/**/*test.ts"]
+  "include": ["src/**/*"]
 }

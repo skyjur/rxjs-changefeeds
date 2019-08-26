@@ -1,0 +1,9 @@
+docs
+example
+test
+dist/**/*test.js
+dist/**/*test.d.js
+src/**/*test.ts
+.cache
+.vscode
+.circleci
