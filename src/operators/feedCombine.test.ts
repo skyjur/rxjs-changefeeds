@@ -1,7 +1,7 @@
 import { deepStrictEqual } from "assert";
 import { TestScheduler } from "rxjs/testing";
 import { ChangeFeed, ChangeFeed$ } from "../types";
-import { feedCombine2 } from "./feedCombine";
+import { feedCombine } from "./feedCombine";
 
 describe("operators/feedCombine", () => {
   let scheduler: TestScheduler;
@@ -19,7 +19,7 @@ describe("operators/feedCombine", () => {
         a: ["set", "1", "Y"]
       });
 
-      const product$ = feedCombine2(x$, y$, (x, y) => ({
+      const product$ = feedCombine([x$, y$], (x, y) => ({
         x,
         y
       }));
@@ -42,7 +42,7 @@ describe("operators/feedCombine", () => {
         b: ["del", "1"]
       });
 
-      const product$ = feedCombine2(x$, y$, (x, y) => ({ x, y }));
+      const product$ = feedCombine([x$, y$], (x, y) => ({ x, y }));
 
       scheduler.expectObservable(product$).toBe("ab-cd", {
         a: ["set", "1", { x: "X", y: undefined }],
@@ -64,7 +64,7 @@ describe("operators/feedCombine", () => {
         b: ["del", "1"]
       });
 
-      const product$ = feedCombine2(x$, y$, (x, y) =>
+      const product$ = feedCombine([x$, y$], (x, y) =>
         x && y ? { x, y } : null
       );
 

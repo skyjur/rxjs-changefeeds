@@ -2,11 +2,44 @@ import { Observable } from "rxjs";
 import { ChangeFeed, ChangeFeed$ } from "../types";
 import { changeFeedHandler } from "../utils";
 
-function feedCombine<Project>(
+interface FeedCombine {
+  <A, B, R>(
+    input: [ChangeFeed$<A>, ChangeFeed$<B>],
+    project: (obj1: A, obj2: B) => R
+  ): ChangeFeed$<R>;
+
+  <A, B, C, R>(
+    input: [ChangeFeed$<A>, ChangeFeed$<B>, ChangeFeed$<C>],
+    project: (obj1: A, obj2: B, obj3: C) => R
+  ): ChangeFeed$<R>;
+
+  <A, B, C, D, R>(
+    input: [ChangeFeed$<A>, ChangeFeed$<B>, ChangeFeed$<C>, ChangeFeed$<D>],
+    project: (obj1: A, obj2: B, obj3: C, obj4: D) => R
+  ): ChangeFeed$<R>;
+
+  <A, B, C, D, E, R>(
+    input: [
+      ChangeFeed$<A>,
+      ChangeFeed$<B>,
+      ChangeFeed$<C>,
+      ChangeFeed$<D>,
+      ChangeFeed$<E>
+    ],
+    project: (obj1: A, obj2: B, obj3: C, obj4: D, obj5: E) => R
+  ): ChangeFeed$<R>;
+
+  <R>(
+    input: Array<ChangeFeed$<any>>,
+    project: (...args: any[]) => R
+  ): ChangeFeed$<R>;
+}
+
+export const feedCombine: FeedCombine = <R>(
   feeds: Array<ChangeFeed$<any>>,
-  project: (...objs: any[]) => Project
-): ChangeFeed$<Project> {
-  return new Observable(subscriber => {
+  project: (...args: any[]) => R
+) =>
+  new Observable<ChangeFeed<R>>(subscriber => {
     let initializing = false;
     const readyAll = feeds.map(() => true);
     const dataAll = feeds.map(() => new Map());
@@ -21,8 +54,6 @@ function feedCombine<Project>(
               subscriber.next(["initializing"]);
             }
             readyAll[index] = false;
-            dataAll[index].clear();
-            projectPublished.clear();
           },
           ready() {
             initializing = false;
@@ -76,42 +107,3 @@ function feedCombine<Project>(
       }
     };
   });
-}
-
-export function feedCombine2<A, B, R>(
-  feed1: ChangeFeed$<A>,
-  feed2: ChangeFeed$<B>,
-  project: (obj1: A, obj2: B) => R
-): ChangeFeed$<R> {
-  return feedCombine<R>([feed1, feed2], project);
-}
-
-export function feedCombine3<A, B, C, R>(
-  feed1: ChangeFeed$<A>,
-  feed2: ChangeFeed$<B>,
-  feed3: ChangeFeed$<C>,
-  project: (obj1: A, obj2: B, obj3: C) => R
-): ChangeFeed$<R> {
-  return feedCombine<R>([feed1, feed2, feed3], project);
-}
-
-export function feedCombine4<A, B, C, D, R>(
-  feed1: ChangeFeed$<A>,
-  feed2: ChangeFeed$<B>,
-  feed3: ChangeFeed$<C>,
-  feed4: ChangeFeed$<D>,
-  project: (obj1: A, obj2: B, obj3: C, obj4: D) => R
-): ChangeFeed$<R> {
-  return feedCombine<R>([feed1, feed2, feed3, feed4], project);
-}
-
-export function feedCombine5<A, B, C, D, E, R>(
-  feed1: ChangeFeed$<A>,
-  feed2: ChangeFeed$<B>,
-  feed3: ChangeFeed$<C>,
-  feed4: ChangeFeed$<D>,
-  feed5: ChangeFeed$<E>,
-  project: (obj1: A, obj2: B, obj3: C, obj4: D, obj5: E) => R
-): ChangeFeed$<R> {
-  return feedCombine<R>([feed1, feed2, feed3, feed4, feed5], project);
-}

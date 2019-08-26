@@ -7,11 +7,21 @@ Example: [demo](https://skyjur.github.io/rxjs-changefeeds/example), [code](examp
 
 ### What are changefeeds?
 
-Changefeed is a log of `set <key> <value>` and `del <key> <value>` operations. This allows to express a collection of objects as observable in an efficient way.
+Changefeed is a log of `set <key> <value>` and `del <key> <value>` operations. This allows to express a collection of objects as observable in efficient way.
 
-Many modern databases come with built in suppory for changefeeds: [CouchDb](https://docs.couchdb.org/en/2.2.0/api/database/changes.html), [RethinkDB](https://rethinkdb.com/docs/changefeeds/javascript/), [MongoDB](https://www.mongodb.com/blog/post/an-introduction-to-change-streams).
+Many modern databases come with built in support for changefeeds: [CouchDb](https://docs.couchdb.org/en/2.2.0/api/database/changes.html), [RethinkDB](https://rethinkdb.com/docs/changefeeds/javascript/), [MongoDB](https://www.mongodb.com/blog/post/an-introduction-to-change-streams).
 
-## Data model
+<a name="changefeed"></a>
+
+## Change feed data model
+
+```ts
+type ChangeFeed<Key, Value> =
+  | ["initializing"]
+  | ["ready"]
+  | ["set", Key, Value]
+  | ["del", Key];
+```
 
 Example:
 
@@ -27,15 +37,38 @@ Example:
 ];
 ```
 
+Value operations:
+
+- `set <key> <value>`:
+  value isadded to collection or updated
+
+- `del <key>`: value is removed from collection
+
+Optional state operations:
+
+- `initializing` and `ready` does not effect behavior - they are useful when loading indicator is wished. We don't do much about it in this library except for passing them through.
+
 # API
 
-## operators/feedFilter
+## RxJS Operators
 
-Transforms observable changfeed into filtered changefeed.
+Methods bellow return [`OperatorFunction<Input, Output>`](https://rxjs-dev.firebaseapp.com/api/index/interface/OperatorFunction)
+
+To learn more about operartors check [rxjs guide](https://rxjs-dev.firebaseapp.com/guide/operators).
+
+### `feedFilter( FilterFunction )`
+
+Filters changefeed values using `FilterFunction`.
+
+- _FilterFunction_:
+  - `(value: Value) => boolean` or
+  - `Observable<FilterFunction>`
+- _Input_: [`ChangeFeed<Key, Value>`](#changefeed)
+- _Output_: [`ChangeFeed<Key, Value>`](#changefeed)
 
 Will transforms `set` events to `del` when old value pass filter but new value does not.
 
-Can take observable filter function.
+Can take observable filter function. When used with observable filter and filter changes, new filter is applied to all values again and `set`/`del` events re-emitted.
 
 Example, using static filter function:
 
@@ -57,7 +90,7 @@ input.next(["set", "x", 2]);
 // output: ["del","x"]
 ```
 
-Example with observable filter function. Notice how only necessary updates are boradcasted after filter value changes.
+Example with observable filter function. Notice how only necessary updates are broadcasted after filter value changes.
 
 ```js
 import { BehaviorSubject, Subject } from "rxjs";
@@ -84,20 +117,26 @@ filter.next(value => value > 1);
 
 Note that when input observable completes, result also completes and filter is unsubscribed.
 
-## operators/feedGroupBy
+### `feedGroupBy( KeyFunction )`
 
-Signature: `feedGroupBy( keyFunction: (value, key) => GroupKey )`
+Group changefeed using keyFunction into separate change feeds.
 
-Splits changefeed into multiple changefeeds using key function. Result is:
+- _KeyFunction_: `(Value, Key) => GroupKey`
+- _Input_: `ChangeFeed<Key, Value>`
+- _Output_: `ChangeFeed<GroupKey, Observable<Input>>` utput result is change feed where each key is result of `keyFunction` and each value is initial changefeed filtered using `keyFunction`
 
-    Map<GroupKey, Observable<ChangeFeed>>
+Notes:
 
-When `set` event has effect on previous group key, it triggers two events:
+When `set` event on existing item in `Input` results in different `GroupKey` than before, this will trigger two events:
 
-1. `del` event in old group.
+1. `del` event in old group
 2. `set` in new group
 
 When there are no more items left in a group, group's observable completes.
+
+If `initializing` and `ready` are used they will be passed through to all groups. If `ready` was received by input and new group is created, `ready` event is triggered to newly created group.
+
+Example:
 
 ```js
 import { Subject } from "rxjs";
@@ -106,56 +145,71 @@ import { feedGroupBy } from "rxjs-changefeeds";
 
 const input = new Subject();
 
-const result = input.pipe(feedGroupBy(num => (num % 2 ? "odd" : "even")));
+const getKey = num => (num % 2 ? "odd" : "even");
 
-result.subscribe({
+const output = input.pipe(feedGroupBy(getKey));
+
+output.subscribe({
   next(record) {
     const [op, groupKey, groupChanges$] = record;
-    console.log("root:", op, groupKey);
-    if (groupChanges$) {
+    console.log("outer:", op, groupKey);
+    if (op === "set") {
       groupChanges$.subscribe({
         next(record) {
-          console.log(groupKey + ":", record);
+          console.log(`inner[${groupKey}]:`, record);
         },
         complete() {
-          console.log(groupKey + ":", "complete.");
+          console.log(`inner[${groupKey}]: complete.`);
         }
       });
     }
   },
   complete() {
-    console.log("root: complete.");
+    console.log("outer: complete.");
   }
 });
 
 input.next(["set", "x", 1]);
 // output:
-// root: set odd
-// odd: ["set","x",1]
+// outer: set odd
+// inner[odd]: ["set","x",1]
 
 input.next(["set", "y", 2]);
 // output:
-// root: set even
-// even: ["set","y",2]
+// outer: set even
+// inner[even]: ["set","y",2]
 
 input.next(["set", "x", 2]);
 // output:
-// odd: ["del","x"]
-// odd: complete.
-// root: del odd
-// even: ["set","x",2]
+// inner[odd]: ["del","x"]
+// inner[odd]: complete.
+// outer: del odd
+// inner[even]: ["set","x",2]
 
 input.complete();
 // output:
-// root: complete.
-// even: complete.
+// outer: complete.
+// inner[even]: complete.
 ```
 
-## operators/feedSortedList
+### `feedSortedList( Comparator, ?Options )`
 
-Signature: `feedSortedList( cmpFunction: (a, b) => number )`
+Transform changefeed into sorted array where each item in the array is an Observable (with additional `key` property) of the `Value`.
 
-Transform observable changefeed into observable sorted list. Each item in the list is BehaviorSubject of the element.
+- _Comparator_: used for sorting the array
+  - `(a: Value, b: Value) => number` or
+  - `Observable<Comparator>`
+- _Input_: `ChangeFeed<Key¸ Value>`
+- _Output_: `Array<Observable<Value> & {key: Key}>`
+- _Options_: optional options:
+  - `throttleTime`: default `100`. Throttles _Output_ and re-sorting. Use `null` to disable throttling and trigger update synchronously.
+  - `scheduler`: default `asyncScheduler`, not used when `throttleTime: null`
+
+Notes:
+
+To minimize re-sorting output only fires events when sort is effected: when new value arrives in input, first it's compared against current siblings, if equality `left <= value <= right` is maintained, then event is not fired in outer observable.
+
+Example:
 
 ```js
 import { Subject, queueScheduler, of, list } from "rxjs";
@@ -166,12 +220,12 @@ const input = new Subject();
 
 const list$ = input.pipe(
   feedSortedList((a, b) => a - b, {
-    // change async dispatching to synchronous dispatching:
+    // for demo purpose we change
     throttleTime: null
   })
 );
 
-// Log sorted list observable:
+// Log sorted list:
 list$.subscribe({
   next(list) {
     console.log("list:", list.map(value$ => value$.key));
@@ -181,7 +235,7 @@ list$.subscribe({
   }
 });
 
-// Log inner (value) observable:
+// Log inner values:
 const flatValues$ = list$.pipe(
   mergeMap(list => of(...list)),
   distinct()
@@ -191,10 +245,10 @@ flatValues$.subscribe({
   next(value$) {
     value$.subscribe({
       next(value) {
-        console.log(`flatValues[${value$.key}]:`, value);
+        console.log(`inner[${value$.key}]:`, value);
       },
       complete() {
-        console.log(`flatValues[${value$.key}]: complete.`);
+        console.log(`inner[${value$.key}]: complete.`);
       }
     });
   }
@@ -203,28 +257,28 @@ flatValues$.subscribe({
 input.next(["set", "x", 1]);
 // output:
 // list: ["x"]
-// flatValues[x]: 1
+// inner[x]: 1
 
 input.next(["set", "y", 2]);
 // output:
 // list: ["x","y"]
-// flatValues[y]: 2
+// inner[y]: 2
 
 // If order does not change no list update is triggered:
 input.next(["set", "y", 3]);
 // output:
-// flatValues[y]: 3
+// inner[y]: 3
 
 // deletion completes value observable and removes it from list:
 input.next(["del", "x"]);
 // output:
 // list: ["y"]
-// flatValues[x]: complete.
+// inner[x]: complete.
 ```
 
-## operators/feedToKeyValueMap
+### `feedToKeyValueMap()`
 
-Transform `Changefeed<Value, Key>` to `Map<Key, Value>`.
+Transform `ChangeFeed<Value, Key>` to `Map<Key, Value>`.
 
 ```js
 import { Subject, queueScheduler, of, list } from "rxjs";
@@ -253,33 +307,107 @@ input.next(["del", "x"]);
 // output: [["y",2]]
 ```
 
-## operators/feedCombine
+## Combiners
 
-`- feedCombine`
+### `feedCombine(Inputs, ProjectFunction)`
 
-Like rxjs [combineLatest](https://www.learnrxjs.io/operators/combination/combinelatest.html) but combines relevant objects using id field.
+Merge multiple chagnefeeds into one based on `key`.
 
+- _Inputs_: array of input change feeds<br>
+  `[Observable<ChangeFeed<Key, Value1>>, ... ,`<br>
+  &nbsp;`Observable<ChangeFeed<Key, ValueN>>]`
+- _ProjectFunction_: combiner producing values for output changefeed<br>
+  `(v1: Value1, ... , vN: ValueN) => Project`
+- _Returns_: `ChangeFeed<Key, Project>`
+
+Notes:
+
+`ProjectFunction` is called with latest value of each change feed in `Inputs` array. When value is not available any of input change feed `valueN` parameter will be `undefined`.
+
+If `ProjectFunction` returns `undefined`:
+
+- no event is emitted, if `ProjectFunction` was not called for this key before or if previous call resulted in `null`
+- `del <key>` is emitted, if `ProjectFunction` previously had returned value
+
+Example:
+
+```js
+import { Subject } from "rxjs";
+import { feedCombine } from "rxjs-changefeeds";
+
+const a$ = new Subject();
+const b$ = new Subject();
+
+const project = (a, b) => ({ a, b });
+
+const result = feedCombine([a$, b$], project);
+
+result.subscribe(console.log);
+
+a$.next(["set", "x", "ax"]);
+a$.next(["set", "y", "ay"]);
+// output:
+// ["set","x",{"a":"ax"}]
+// ["set","y",{"a":"ay"}]
+
+b$.next(["set", "x", "bx"]);
+// ["set","x",{"a":"ax","b":"bx"}]
+
+a$.next(["del", "x"]);
+// ["set","x",{"b":"by"}]
+
+b$.next(["del", "x"]);
+// ["del","x"]
 ```
 
-```
+## Subjects
 
-## ChangeFeedReplay
+### `new ChangeFeedReplaySubject()`
 
 Useful when necessary to convert from hot changefeed to cold changefeed.
 
-Similar to [ChangeFeedReplay](https://www.learnrxjs.io/subjects/replaysubject.html), but replays only last record per key.
+Similar to [ReplaySubject](https://www.learnrxjs.io/subjects/replaysubject.html), but replays only last record per key.
+
+If input item is deleted with `del`, then it's removed from `ChangeFeedReplaySubject` internal state and won't trigger any events in subsequent subscribers.
 
 ```es6
 import { ChangeFeedReplaySubject } from "rxjs-changefeeds";
 
 const subject = new ChangeFeedReplaySubject();
 
+subject.subscribe({
+  next(val) {
+    console.log("A:", val);
+  }
+});
+
 subject.next(["set", 1, "one"]);
 subject.next(["set", 2, "two"]);
 subject.next(["set", 1, "onePlus"]);
-
-subject.subscribe(console.log);
 // output:
-// ["set",1,"onePlus"]
-// ["set",2,"two"]
+// A: ["set",1,"one"]
+// A: ["set",2,"two"]
+// A: ["set",1,"onePlus"]
+
+subject.subscribe({
+  next(val) {
+    console.log("B:", val);
+  }
+});
+// output:
+// B: ["set",1,"onePlus"]
+// B: ["set",2,"two"]
+
+subject.next(["del", 1]);
+// output:
+// A: ["del",1]
+// B: ["del",1]
+
+subject.subscribe({
+  next(val) {
+    console.log("C:", val);
+  }
+});
+// output:
+// C: ["set",2,"two"]
 ```

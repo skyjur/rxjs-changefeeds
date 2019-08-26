@@ -19,8 +19,8 @@ interface Options {
 }
 
 type Input<Key, Value> = ChangeFeed<Value, Key>;
-type Output<Key, Value> = Array<ValueObservable<Key, Value>>;
-type OperatorType<Key, Value> = OperatorFunction<
+type Output<Key, Value> = Array<Observable<Value> & { key: Key }>;
+type ReturnType<Key, Value> = OperatorFunction<
   Input<Key, Value>,
   Output<Key, Value>
 >;
@@ -36,10 +36,10 @@ export class ValueObservable<Key, Value> extends Observable<Value> {
   }
 }
 
-export function feedSortedList<Value, Key = any>(
+export const feedSortedList = <Value, Key = any>(
   comparator: Comparator<Value> | Comparator$<Value>,
   { throttleTime = 100, scheduler = asyncScheduler }: Options = {}
-): OperatorType<Key, Value> {
+): ReturnType<Key, Value> => {
   return (input: ChangeFeed$<Value>) => {
     return new Observable(subscriber => {
       type DataValue = {
@@ -146,4 +146,4 @@ export function feedSortedList<Value, Key = any>(
       };
     });
   };
-}
+};

@@ -14,10 +14,10 @@ export const controlledInterval = ({
     })
   );
 
-export function randomizedInterval(
+export const randomizedInterval = (
   period: number,
   deviation = 1
-): Observable<void> {
+): Observable<void> => {
   return new Observable(subscriber => {
     let timeout: any;
 
@@ -32,4 +32,4 @@ export function randomizedInterval(
       clearTimeout(timeout);
     };
   });
-}
+};
