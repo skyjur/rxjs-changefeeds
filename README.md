@@ -1,5 +1,8 @@
 # rxjs-changefeed
 
+[![CircleCI](https://circleci.com/gh/skyjur/rxjs-changefeeds/tree/master.svg?style=svg)](https://circleci.com/gh/ReactiveX/rxjs/tree/master)
+[![npm version](https://badge.fury.io/js/rxjs-changefeeds.svg)](https://badge.fury.io/js/rxjs-changefeeds)
+
 RxJS helpers to build things on top of changefeeds.
 
 Api docs: [bellow](#API)
