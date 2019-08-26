@@ -13,7 +13,7 @@ export interface User {
   jobTitle: string;
 }
 export type User$ = Observable<User>;
-export type ΔUser = ChangeFeed<User>;
+export type ΔUser = ChangeFeed<string, User>;
 export type ΔUser$ = Observable<ΔUser>;
 
 const citySample = [
@@ -34,7 +34,7 @@ const citySample = [
   "San Francisco"
 ];
 
-export class UserFeedGenerator extends FeedGenerator<User> {
+export class UserFeedGenerator extends FeedGenerator<string, User> {
   public citiesRatio = 0.1;
 
   public create(): User {

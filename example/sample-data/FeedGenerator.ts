@@ -1,16 +1,15 @@
 import { ChangeFeed } from "../../src/types";
-import { ΔUser } from "./UserFeedGenerator";
 
 export interface IHasId {
   id: string;
 }
 
-export abstract class FeedGenerator<T extends IHasId> {
+export abstract class FeedGenerator<Value extends IHasId> {
   public initializing = false;
   public ready = false;
   public targetSize = 100;
-  public data: T[] = [];
-  public next(): ΔUser {
+  public data: Value[] = [];
+  public next(): ChangeFeed<string, Value> {
     const { targetSize } = this;
     const { data } = this;
     if (!this.initializing && !this.ready) {
@@ -39,6 +38,6 @@ export abstract class FeedGenerator<T extends IHasId> {
       return ["set", obj.id, obj];
     }
   }
-  protected abstract create(): T;
-  protected abstract update(obj: T): T;
+  protected abstract create(): Value;
+  protected abstract update(obj: Value): Value;
 }

@@ -35,11 +35,11 @@ interface FeedCombine {
   ): ChangeFeed$<R>;
 }
 
-export const feedCombine: FeedCombine = <R>(
+export const feedCombine: FeedCombine = <Project>(
   feeds: Array<ChangeFeed$<any>>,
-  project: (...args: any[]) => R
+  project: (...args: any[]) => Project
 ) =>
-  new Observable<ChangeFeed<R>>(subscriber => {
+  new Observable<ChangeFeed<any, Project>>(subscriber => {
     let initializing = false;
     const readyAll = feeds.map(() => true);
     const dataAll = feeds.map(() => new Map());
@@ -62,7 +62,7 @@ export const feedCombine: FeedCombine = <R>(
               subscriber.next(["ready"]);
             }
           },
-          set(key: string, value: any) {
+          set(key: any, value: any) {
             dataAll[index].set(key, value);
             const combined = project(...dataAll.map(data => data.get(key)));
             if (combined) {
@@ -75,7 +75,7 @@ export const feedCombine: FeedCombine = <R>(
               }
             }
           },
-          del(key: string) {
+          del(key: any) {
             if (dataAll[index].has(key)) {
               dataAll[index].delete(key);
               if (dataAll.every(map => !map.has(key))) {
