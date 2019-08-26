@@ -22,7 +22,8 @@ export const shadeLabels: { [key in Shade]: string } = {
   [Shade.green]: "green",
   [Shade.cyan]: "cyan",
   [Shade.blue]: "blue",
-  [Shade.violet]: "violet"
+  [Shade.violet]: "violet",
+  [Shade.grey]: "grey"
 };
 
 const ShadeLabel = ({  }: Context, shade: Shade) => shadeLabels[shade];

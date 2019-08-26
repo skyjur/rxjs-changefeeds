@@ -12,7 +12,8 @@ export enum Shade {
   green,
   cyan,
   blue,
-  violet
+  violet,
+  grey
 }
 
 export const allShades: Shade[] = [
@@ -21,7 +22,8 @@ export const allShades: Shade[] = [
   Shade.green,
   Shade.cyan,
   Shade.blue,
-  Shade.violet
+  Shade.violet,
+  Shade.grey
 ];
 
 export type Shade$ = Observable<Shade>;
@@ -32,6 +34,9 @@ export const getShade = (color: string): Shade => {
   const r = parseInt(color.slice(1, 3), 16);
   const g = parseInt(color.slice(3, 5), 16);
   const b = parseInt(color.slice(5, 7), 16);
+  if (Math.abs(r - b) < 20 && Math.abs(r - g) < 20 && Math.abs(g - b) < 20) {
+    return Shade.grey;
+  }
   const shadesAndWeights: [Shade, number][] = [
     [Shade.red, r],
     [Shade.yellow, r * 0.6 + g * 0.6],
