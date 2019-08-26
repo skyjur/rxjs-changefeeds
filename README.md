@@ -192,7 +192,7 @@ input.complete();
 // inner[even]: complete.
 ```
 
-### `feedSortedList( Comparator, ?Options )`
+### `feedSortedList( Comparator, Options? )`
 
 Transform changefeed into sorted array where each item in the array is an Observable (with additional `key` property) of the `Value`.
 
