@@ -43,7 +43,7 @@ Example:
 Value operations:
 
 - `set <key> <value>`:
-  value isadded to collection or updated
+  value is added to collection or updated
 
 - `del <key>`: value is removed from collection
 
@@ -57,7 +57,7 @@ Optional state operations:
 
 Methods bellow return [`OperatorFunction<Input, Output>`](https://rxjs-dev.firebaseapp.com/api/index/interface/OperatorFunction)
 
-To learn more about operartors check [rxjs guide](https://rxjs-dev.firebaseapp.com/guide/operators).
+To learn more check [rxjs operators guide](https://rxjs-dev.firebaseapp.com/guide/operators).
 
 ### `feedFilter( FilterFunction )`
 
@@ -210,7 +210,7 @@ Transform changefeed into sorted array where each item in the array is an Observ
 
 Notes:
 
-To minimize re-sorting output only fires events when sort is effected: when new value arrives in input, first it's compared against current siblings, if equality `left <= value <= right` is maintained, then event is not fired in outer observable.
+Output only fires events when sort is effected: when new value arrives in input, first it's compared against it's siblings, if equality `left <= value <= right` is maintained, then re-sorting does not happen.
 
 Example:
 
