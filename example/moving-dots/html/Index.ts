@@ -81,7 +81,7 @@ export const Index = ({ html }: Context, props: IndexProps) => {
         >
         <a
           href="https://github.com/skyjur/rxjs-changefeeds#feedsortedlist-comparator-options-"
-          ><small class="is-size-7">code</small></a
+          ><small class="is-size-7">doc</small></a
         >
       </h2>
 
