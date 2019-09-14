@@ -31,6 +31,11 @@
       "type": "npm",
       "script": "build:example",
       "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "run:example",
+      "problemMatcher": []
     }
   ]
 }

@@ -61,7 +61,7 @@ To learn more check [rxjs operators guide](https://rxjs-dev.firebaseapp.com/guid
 
 ### `feedFilter( FilterFunction )`
 
-Filters changefeed values using `FilterFunction`.
+Filters changefeed values using `FilterFunction`. [demo](https://skyjur.github.io/rxjs-changefeeds/example/#feedFilter)
 
 - _FilterFunction_:
   - `(value: Value) => boolean` or
@@ -122,7 +122,7 @@ Note that when input observable completes, result also completes and filter is u
 
 ### `feedGroupBy( KeyFunction )`
 
-Group changefeed using keyFunction into separate change feeds.
+Group changefeed using keyFunction into separate change feeds. [demo](https://skyjur.github.io/rxjs-changefeeds/example/#feedGroupBy)
 
 - _KeyFunction_: `(Value, Key) => GroupKey`
 - _Input_: `ChangeFeed<Key, Value>`
@@ -197,7 +197,7 @@ input.complete();
 
 ### `feedSortedList( Comparator, Options? )`
 
-Transform changefeed into sorted array where each item in the array is an Observable (with additional `key` property) of the `Value`.
+Transform changefeed into sorted array where each item in the array is an Observable (with additional `key` property) of the `Value`. [demo](https://skyjur.github.io/rxjs-changefeeds/example/#feedSortedList)
 
 - _Comparator_: used for sorting the array
   - `(a: Value, b: Value) => number` or
