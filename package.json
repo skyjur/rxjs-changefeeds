@@ -38,7 +38,7 @@
     "lit-html": "^1.1.1",
     "lodash": "^4.17.15",
     "markdown-doctest": "git+https://github.com/skyjur/markdown-doctest.git#de80524f276340f461d8e15a4672deb45892ff72",
-    "mocha": "^6.1.4",
+    "mocha": "^10.2.0",
     "prettier": "^1.18.2",
     "rethinkdb": "^2.3.3",
     "rx-lit-html": "git+https://github.com/skyjur/rx-lit-html.git",
